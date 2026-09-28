@@ -1,0 +1,32 @@
+// ===========================================================================
+//  schema-integration operator
+//  Incremental schema integration per Flores et al. (Semantic Web 15, 2024):
+//  given source schemas and class/datatype/object alignments, builds the
+//  integrated graph (the global schema) using the I1..I4 invariants from
+//  Algorithm 2 of the paper.
+//
+//  Stored as a new DRAFT GraphVersion against urn:aran:schema. Promotion
+//  uses the existing FusekiGraphStore.promote() flow.
+// ===========================================================================
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':aran-core')
+    implementation 'org.jspecify:jspecify'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.16.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

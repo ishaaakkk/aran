@@ -1,0 +1,39 @@
+### ============================================================
+###  Authentication
+###  Obtain a Keycloak access token using the Resource Owner
+###  Password Credentials grant (dev only — not for production).
+###
+###  Run this request first. IntelliJ stores the token in the
+###  `access_token` response variable which other .http files
+###  reference as {{access_token}}.
+###
+###  Select the `dev` environment from the dropdown (top-right).
+### ============================================================
+
+### Get token for alice (dev seed user)
+# @name login
+POST {{keycloakUrl}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id={{clientId}}&username=alice&password={{alicePassword}}&scope=openid
+
+> {%
+  client.global.set("access_token", response.body.access_token);
+  client.global.set("refresh_token", response.body.refresh_token);
+  client.log("Token stored. Expires in: " + response.body.expires_in + "s");
+%}
+
+### Decode the stored token (base64 payload — readable in the response)
+GET https://jwt.io/api/v1?token={{access_token}}
+
+### Refresh the token (use when access_token has expired)
+# @name refresh
+POST {{keycloakUrl}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&client_id={{clientId}}&refresh_token={{refresh_token}}
+
+> {%
+  client.global.set("access_token", response.body.access_token);
+  client.log("Token refreshed. Expires in: " + response.body.expires_in + "s");
+%}

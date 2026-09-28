@@ -1,0 +1,463 @@
+/**
+ * Landing page. Everything here is expressed in the Aran tokens declared in
+ * src/css/custom.css, so a palette change moves this page with it.
+ */
+
+.hero {
+  padding: 5.5rem 1rem 4.5rem;
+  border-bottom: 1px solid var(--aran-border);
+}
+
+.heroGrid {
+  display: flex;
+  gap: 3.5rem;
+  align-items: center;
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+.heroText {
+  flex: 1.05;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.heroVisual {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .heroGrid {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .heroVisual {
+    width: 100%;
+  }
+}
+
+.eyebrow {
+  display: inline-block;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--aran-border);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--aran-primary) 8%, transparent);
+  color: var(--aran-muted-foreground);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  align-self: flex-start;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2.35rem, 4.4vw, 3.35rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.titleAccent {
+  background: linear-gradient(
+    100deg,
+    var(--aran-primary),
+    color-mix(in srgb, var(--aran-primary) 78%, var(--aran-accent))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  max-width: 33rem;
+  margin: 0;
+  color: var(--aran-muted-foreground);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  line-height: 1.65;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-start;
+}
+
+/* ── Hero visual: sources → one graph → query / apps / agents ─────────── */
+
+.diagramWrap {
+  position: relative;
+  width: 560px;
+  max-width: 100%;
+  height: 400px;
+}
+
+@media (max-width: 640px) {
+  .diagramWrap {
+    transform: scale(0.62);
+    transform-origin: top center;
+    margin-bottom: -152px;
+  }
+}
+
+.diagramSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.diagramNode {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 150px;
+  height: 72px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--aran-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--aran-card);
+}
+
+.diagramNodeStack {
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0 0.8rem;
+}
+
+.diagramNodeLabel {
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.diagramNodeSub {
+  font-size: 0.68rem;
+  color: var(--aran-muted-foreground);
+}
+
+.diagramGraph {
+  position: absolute;
+  left: 210px;
+  top: 135px;
+  width: 140px;
+  height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1.5px solid var(--aran-primary);
+  border-radius: var(--ifm-global-radius);
+  background: color-mix(in srgb, var(--aran-primary) 7%, var(--aran-card));
+}
+
+.diagramGraphLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--aran-primary);
+}
+
+.diagramCaption {
+  margin: 0;
+  max-width: 30rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--aran-muted-foreground);
+}
+
+.section {
+  padding: 4.5rem 1rem;
+  border-bottom: 1px solid var(--aran-border);
+}
+
+.sectionInner {
+  max-width: 62rem;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  margin: 0 0 0.6rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.sectionLead {
+  max-width: 44rem;
+  margin: 0 0 2.5rem;
+  color: var(--aran-muted-foreground);
+  line-height: 1.65;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.4rem;
+  border: 1px solid var(--aran-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--aran-card);
+}
+
+.cardIcon {
+  display: block;
+  color: var(--aran-primary);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.cardBody {
+  margin: 0;
+  color: var(--aran-muted-foreground);
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+/* The numbered pipeline. A connected row on wide screens; a plain ordered
+   grid below 900px, where there isn't room for the connectors. Both are real
+   <li> markup, so either reads as ordered to a screen reader. */
+.pipelineRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pipelineNode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.1rem 1rem;
+  border: 1px solid var(--aran-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--aran-muted);
+}
+
+.pipelineNodeActive {
+  border-color: var(--aran-primary);
+  background: color-mix(in srgb, var(--aran-primary) 7%, var(--aran-card));
+}
+
+.pipelineArrow {
+  width: 2rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--aran-border);
+}
+
+.pipelineNum {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--aran-primary);
+}
+
+.pipelineTitle {
+  font-weight: 640;
+  font-size: 0.95rem;
+}
+
+.pipelineBody {
+  color: var(--aran-muted-foreground);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.steps {
+  display: none;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.step {
+  position: relative;
+  padding: 1.1rem 1rem 1.1rem 1rem;
+  border: 1px solid var(--aran-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--aran-card);
+}
+
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  display: block;
+  margin-bottom: 0.55rem;
+  color: var(--aran-primary);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.stepTitle {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 640;
+  font-size: 0.95rem;
+}
+
+.stepBody {
+  color: var(--aran-muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .pipelineRow {
+    display: none;
+  }
+  .steps {
+    display: grid;
+  }
+}
+
+/* Two columns: prose on the left, a code sample on the right. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.codeCaption {
+  margin: 0.75rem 0 0;
+  color: var(--aran-muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+/* ── Data repositories capability matrix ───────────────────────────────── */
+
+.matrixScroll {
+  overflow-x: auto;
+}
+
+.matrixWrap {
+  min-width: 46rem;
+  border: 1px solid var(--aran-border);
+  border-radius: var(--ifm-global-radius);
+  overflow: hidden;
+  background: var(--aran-card);
+}
+
+.matrixHeadRow,
+.matrixRow {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1.3fr 1.5fr;
+}
+
+.matrixHeadRow {
+  background: var(--aran-muted);
+  border-bottom: 1px solid var(--aran-border);
+}
+
+.matrixRow {
+  border-bottom: 1px solid var(--aran-border);
+}
+
+.matrixRow:last-child {
+  border-bottom: none;
+}
+
+.matrixHeadCell {
+  padding: 0.7rem 1rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--aran-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.matrixCell {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.matrixType {
+  font-weight: 550;
+}
+
+.matrixNote {
+  font-size: 0.78rem;
+  color: var(--aran-muted-foreground);
+}
+
+.matrixValue {
+  font-size: 0.8rem;
+  color: var(--aran-foreground);
+  font-weight: 550;
+}
+
+.matrixDash {
+  color: color-mix(in srgb, var(--aran-muted-foreground) 55%, transparent);
+}
+
+.matrixLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1rem;
+  margin-top: 0.9rem;
+  font-size: 0.8rem;
+  color: var(--aran-muted-foreground);
+}
+
+.matrixLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.matrixFootLink {
+  margin-left: auto;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.closing {
+  padding: 4.5rem 1rem 5.5rem;
+  text-align: center;
+}
+
+.footnote {
+  max-width: 42rem;
+  margin: 2.5rem auto 0;
+  color: var(--aran-muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}

@@ -1,0 +1,107 @@
+[
+  {
+    "doi": "10.1145/SS001",
+    "title": "Ontology-Based Data Integration: A Decade of Progress",
+    "year": 2020,
+    "authors": ["R002", "R008", "R012"],
+    "citation_count": 143
+  },
+  {
+    "doi": "10.1145/SS002",
+    "title": "Reasoning over Federated Knowledge Graphs",
+    "year": 2021,
+    "authors": ["R001", "R006", "R015"],
+    "citation_count": 89
+  },
+  {
+    "doi": "10.1145/SS003",
+    "title": "Neural Schema Matching with Pre-Trained Language Models",
+    "year": 2022,
+    "authors": ["R003", "R020"],
+    "citation_count": 67
+  },
+  {
+    "doi": "10.1145/SS004",
+    "title": "Scalable SPARQL Querying with Adaptive Join Ordering",
+    "year": 2021,
+    "authors": ["R001", "R014", "R007"],
+    "citation_count": 52
+  },
+  {
+    "doi": "10.1145/SS005",
+    "title": "Entity Alignment across Knowledge Graphs via Structural Embeddings",
+    "year": 2022,
+    "authors": ["R005", "R009", "R013"],
+    "citation_count": 114
+  },
+  {
+    "doi": "10.1145/SS006",
+    "title": "GAV Rewriting for Incomplete Databases",
+    "year": 2023,
+    "authors": ["R008", "R019", "R002"],
+    "citation_count": 38
+  },
+  {
+    "doi": "10.1145/SS007",
+    "title": "Data Profiling for Automated Integration",
+    "year": 2023,
+    "authors": ["R012", "R017", "R006"],
+    "citation_count": 45
+  },
+  {
+    "doi": "10.1145/SS008",
+    "title": "Conflict Resolution in Heterogeneous Knowledge Bases",
+    "year": 2022,
+    "authors": ["R010", "R003", "R011"],
+    "citation_count": 61
+  },
+  {
+    "doi": "10.1145/SS009",
+    "title": "Incremental View Maintenance for RDF Graphs",
+    "year": 2021,
+    "authors": ["R004", "R007"],
+    "citation_count": 29
+  },
+  {
+    "doi": "10.1145/SS010",
+    "title": "Learning Semantic Correspondences from Crowd Annotations",
+    "year": 2020,
+    "authors": ["R013", "R016", "R005"],
+    "citation_count": 77
+  },
+  {
+    "doi": "10.1145/SS011",
+    "title": "Approximate Query Answering over Integrated Sources",
+    "year": 2024,
+    "authors": ["R001", "R012", "R018"],
+    "citation_count": 11
+  },
+  {
+    "doi": "10.1145/SS012",
+    "title": "Efficient Provenance Tracking for ETL Pipelines",
+    "year": 2023,
+    "authors": ["R020", "R009", "R015"],
+    "citation_count": 34
+  },
+  {
+    "doi": "10.1145/SS013",
+    "title": "Benchmark for Heterogeneous Graph Integration Systems",
+    "year": 2024,
+    "authors": ["R002", "R006", "R014", "R017"],
+    "citation_count": 19
+  },
+  {
+    "doi": "10.1145/SS014",
+    "title": "Denial Constraint Discovery in Relational Data",
+    "year": 2022,
+    "authors": ["R008", "R010"],
+    "citation_count": 58
+  },
+  {
+    "doi": "10.1145/SS015",
+    "title": "Cross-Lingual Ontology Alignment Using Multilingual Embeddings",
+    "year": 2023,
+    "authors": ["R003", "R011", "R013", "R018"],
+    "citation_count": 42
+  }
+]

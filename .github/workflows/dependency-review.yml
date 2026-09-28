@@ -1,0 +1,25 @@
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail the PR if a new dependency has a known vulnerability with
+          # CVSS score >= 7 (high or critical).
+          fail-on-severity: high
+          # Deny dependencies with licenses that are incompatible with a
+          # commercial product. Adjust to match your legal requirements.
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0

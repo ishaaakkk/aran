@@ -1,0 +1,1 @@
+ALTER TABLE dataset ADD COLUMN bootstrap_status VARCHAR(64) DEFAULT 'PENDING';

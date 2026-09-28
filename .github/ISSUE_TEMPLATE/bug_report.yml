@@ -1,0 +1,97 @@
+name: Bug report
+description: Something behaves differently from how it is documented or intended.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **If this is a security problem, stop and read [SECURITY.md](../blob/main/SECURITY.md)
+        instead** — do not describe it in a public issue.
+
+        Aran is a research preview: some capabilities are implemented but have
+        not yet been run against every kind of live system. If you are the first
+        person to try one, say so — that is useful.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you observe? Include the error message and stack trace if there was one.
+      placeholder: Paste logs as text rather than a screenshot where you can — it makes them searchable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce it
+      description: >-
+        The smallest sequence of steps that shows the problem. If it involves a data
+        source, the schema matters more than the data — please do not paste anything
+        confidential.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Aran
+      description: A rough guess is fine. Pick "not sure" rather than leaving it blank.
+      options:
+        - Not sure
+        - Bootstrapping / source connectors
+        - Profiling / join discovery (freyja)
+        - Schema integration / the model
+        - Query engine (OQL, planning, execution)
+        - aran-lake (snapshots, storage)
+        - Web UI
+        - Identity, tenancy, or permissions
+        - JDBC / programmatic access
+        - Deployment, compose, or upgrade
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Aran version or commit
+      description: >-
+        A release tag, or the output of `git rev-parse --short HEAD`. Aran is pre-1.0
+        and moves quickly — without this we usually cannot tell whether it is already fixed.
+      placeholder: "v0.1.0, or 17b10e4"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: How you are running it, and on what.
+      value: |
+        - How it runs: (compose.standalone.yml / docker-compose.yml / gradlew bootRun / other)
+        - OS and architecture:
+        - Java version (if running from source):
+        - Browser (if it is a UI bug):
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: conduct
+    attributes:
+      label: Code of Conduct
+      options:
+        - label: I agree to follow this project's [Code of Conduct](../blob/main/CODE_OF_CONDUCT.md).
+          required: true

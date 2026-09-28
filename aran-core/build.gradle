@@ -1,0 +1,82 @@
+// ===========================================================================
+//  aran-core
+//  The rewritten platform core: tenant context, plugin registry/orchestration,
+//  domain model. Depends on the plugin API (to load plugins) but NOT on any
+//  concrete plugin or adapter — those are wired in at the application layer.
+// ===========================================================================
+plugins {
+    id 'java-library'
+    // The connector conformance kit ships from here so every module that implements a
+    // SourceConnector can run it — aran-operators today, a third-party connector later.
+    // Test sources are not publishable to other modules; fixtures are.
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    // Core uses the Spring context for bean wiring,
+    // but deliberately NOT spring-boot-starter-web — the core is transport
+    // agnostic. HTTP lives in aran-application.
+    api 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot'
+
+    implementation 'org.springframework:spring-tx'
+    implementation 'org.springframework:spring-context'
+
+    // Caffeine — used by IdentityService for a small, short-TTL cache that
+    // keeps per-request user provisioning from hitting the DB every time.
+    // Already on the Spring Boot 4 classpath transitively; declared
+    // explicitly because the core directly uses the API.
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
+    // Jackson Databind for JSON processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // Apache Jena for W3C RDF Graph Model and SPARQL 1.1 APIs. `api`, because core's own ports
+    // speak it (GraphStore hands out Jena Models): consumers compile against the version core
+    // runs on instead of each redeclaring one — which is how two versions got onto one classpath.
+    api "org.apache.jena:jena-arq:${jenaVersion}"
+
+    implementation 'org.jspecify:jspecify'
+    // Pinned to 0.9.1 (2023) until now, while every operator used ${duckdbJdbcVersion} — two
+    // DuckDB JDBC versions on one classpath, with whichever the classloader reached first
+    // deciding what `DatasetService`'s parquet preview actually ran on. Aligned here; core still
+    // should not depend on DuckDB at all, which is H-6 and belongs with M10's extraction rather
+    // than with a version bump.
+    implementation "org.duckdb:duckdb_jdbc:${duckdbJdbcVersion}"
+    implementation 'org.apache.calcite:calcite-core:1.41.0'
+}
+
+dependencies {
+    // The root build applies the Boot BOM to `implementation` only, and the test-fixtures
+    // configurations are not that — without this every version below resolves to nothing.
+    testFixturesApi platform('org.springframework.boot:spring-boot-dependencies:4.0.6')
+
+    // The contract asserts on the RDFS graph a connector emits and is written in JUnit/AssertJ,
+    // so all three are api-scoped: a module extending it must not re-declare them.
+    testFixturesApi 'org.junit.jupiter:junit-jupiter'
+    testFixturesApi 'org.assertj:assertj-core'
+    // Jena is not in the Boot BOM, so the version is explicit here as it is above.
+    testFixturesApi "org.apache.jena:jena-arq:${jenaVersion}"
+
+    // GarageContainer extends GenericContainer, so consumers compile against it. Version from the
+    // Boot BOM, which is what every module's testcontainers core already resolves to.
+    testFixturesApi 'org.testcontainers:testcontainers'
+}
+
+tasks.named('test') {
+    // DuckDbSessionArchitectureTest, SqlLiteralArchitectureTest and
+    // SourceDatabaseConnectionArchitectureTest scan every module's main sources, not this one's.
+    // Undeclared, a change that adds a second `jdbc:duckdb` site to another module leaves this
+    // task UP-TO-DATE and the rule unchecked. The roots are the tests' MODULE_ROOTS.
+    inputs.files(['aran-core', 'aran-application', 'aran-adapters', 'aran-operators', 'aran-client'].collect { root ->
+        fileTree(rootProject.file(root)) {
+            include '**/src/main/java/**/*.java'
+            exclude '**/build/**', '**/.venv/**', '**/node_modules/**'
+        }
+    }).withPropertyName('mainSourcesScannedByArchitectureTests')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    // FederatedProfilingDocsTest reads every docs page.
+    inputs.files(fileTree(rootProject.file('docs-site/docs')) { include '**/*.md', '**/*.mdx' })
+            .withPropertyName('docsPages')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+}

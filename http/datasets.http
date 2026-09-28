@@ -1,0 +1,40 @@
+### ============================================================
+###  Datasets API — scan + import from a relational repository
+###  Run auth.http first to populate {{access_token}}.
+###  {{project_id}} / {{repository_id}} come from projects.http and
+###  the repository you registered (RELATIONAL_DB, PostgreSQL).
+### ============================================================
+
+### Scan the tables/views a repository exposes
+GET {{baseUrl}}/api/projects/{{project_id}}/repositories/{{repository_id}}/scan
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Import a PostgreSQL table as a durable parquet snapshot in the lake,
+### then bootstrap it like any upload. Complementary to live federation:
+### import makes a snapshot copy; a federated repo passes queries through.
+# @name importTable
+POST {{baseUrl}}/api/projects/{{project_id}}/repositories/{{repository_id}}/datasets/import
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "tableName": "people"
+}
+
+> {%
+  client.global.set("import_dataset_id", response.body.id);
+  client.global.set("import_job_id", response.body.bootstrapJobId);
+  client.log("Import dataset " + response.body.id + " job " + response.body.bootstrapJobId);
+%}
+
+### Poll the import+bootstrap job (stages: lake import running → bootstrap → done)
+GET {{baseUrl}}/api/jobs/{{import_job_id}}
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Preview the imported (parquet) snapshot's first rows
+GET {{baseUrl}}/api/projects/{{project_id}}/repositories/{{repository_id}}/datasets/{{import_dataset_id}}/preview
+Authorization: Bearer {{access_token}}
+Accept: application/json

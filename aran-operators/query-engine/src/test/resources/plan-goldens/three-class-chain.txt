@@ -1,0 +1,6 @@
+PROJECT[name, title]
+  JOIN[inner, id = artwork_id]
+    SCAN[u_art_Artworks]
+    JOIN[inner, id = customer_id]
+      SCAN[u_cust_Customer]
+      SCAN[u_order_Orders]

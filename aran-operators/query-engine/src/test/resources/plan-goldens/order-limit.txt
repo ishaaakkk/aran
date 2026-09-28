@@ -1,0 +1,4 @@
+SORT[keys=0, fetch]
+  SORT[keys=1]
+    PROJECT[title]
+      SCAN[u_art_Artworks]

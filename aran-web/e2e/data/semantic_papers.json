@@ -1,0 +1,16 @@
+[
+  {
+    "doi": "10.1145/SS001",
+    "name": "Ontology-Based Data Integration",
+    "pub_year": 2020,
+    "author_ref": "R-004",
+    "venue": { "code": "V-01", "label": "ISWC" }
+  },
+  {
+    "doi": "10.1145/SS002",
+    "name": "Reasoning over Knowledge Graphs",
+    "pub_year": 2021,
+    "author_ref": "R-005",
+    "venue": { "code": "V-03", "label": "VLDB" }
+  }
+]

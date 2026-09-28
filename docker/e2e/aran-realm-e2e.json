@@ -1,0 +1,691 @@
+{
+  "realm": "aran-e2e",
+  "enabled": true,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 10,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "maxDeltaTimeSeconds": 43200,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+  "displayName": "Aran",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": true,
+  "verifyEmail": false,
+  "sslRequired": "external",
+  "accessTokenLifespan": 1800,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 7200,
+  "roles": {
+    "realm": [
+      {
+        "name": "platform-admin",
+        "description": "Aran platform administrator (cross-tenant operations). Not the same as a tenant OWNER — tenant roles live in the application database on Membership, not in Keycloak."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "aran-web",
+      "name": "Aran Web",
+      "description": "Public SPA client. Authorization-code + PKCE; no client secret. No client roles — application roles live on Membership.",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5273"
+      },
+      "redirectUris": [
+        "http://localhost:5273/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5273",
+        "+"
+      ],
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "email",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "email",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "firstName",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "name",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "aran-backend",
+      "name": "Aran backend service account",
+      "description": "Machine credential so Aran's backend can create and manage users through its own admin UI. No human logs in through this client. Scoped to manage-users/view-users only — NOT a realm admin.",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "secret": "dev-backend-secret-change-in-prod",
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "aran-cli",
+      "name": "Aran scripted login",
+      "description": "Public client for password-grant logins from scripts: the standalone smoke test and operator tooling. No browser flow — the SPA uses aran-web with PKCE; widening that client to direct grants would trade its whole PKCE posture for a test's convenience.",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-aran-backend",
+      "enabled": true,
+      "serviceAccountClientId": "aran-backend",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users"
+        ]
+      }
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000001",
+      "username": "e2e-auth",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-auth@example.com",
+      "firstName": "E2E AUTH",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000001"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000002",
+      "username": "e2e-a1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-a1@example.com",
+      "firstName": "E2E A1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000002"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000003",
+      "username": "e2e-a2",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-a2@example.com",
+      "firstName": "E2E A2",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000003"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000004",
+      "username": "e2e-a3",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-a3@example.com",
+      "firstName": "E2E A3",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000004"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000005",
+      "username": "e2e-a4",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-a4@example.com",
+      "firstName": "E2E A4",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000005"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000006",
+      "username": "e2e-a5",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-a5@example.com",
+      "firstName": "E2E A5",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000006"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000007",
+      "username": "e2e-b1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-b1@example.com",
+      "firstName": "E2E B1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000007"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000008",
+      "username": "e2e-b2",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-b2@example.com",
+      "firstName": "E2E B2",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000008"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000009",
+      "username": "e2e-b3",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-b3@example.com",
+      "firstName": "E2E B3",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000009"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000010",
+      "username": "e2e-b4",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-b4@example.com",
+      "firstName": "E2E B4",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000010"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000011",
+      "username": "e2e-b5",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-b5@example.com",
+      "firstName": "E2E B5",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000011"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000012",
+      "username": "e2e-c1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-c1@example.com",
+      "firstName": "E2E C1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000012"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000013",
+      "username": "e2e-c2",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-c2@example.com",
+      "firstName": "E2E C2",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000013"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000014",
+      "username": "e2e-c3",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-c3@example.com",
+      "firstName": "E2E C3",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000014"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000015",
+      "username": "e2e-d1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-d1@example.com",
+      "firstName": "E2E D1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000015"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000016",
+      "username": "e2e-s1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-s1@example.com",
+      "firstName": "E2E S1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000016"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000017",
+      "username": "e2e-a6",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-a6@example.com",
+      "firstName": "E2E A6",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000017"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000018",
+      "username": "e2e-p1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-p1@example.com",
+      "firstName": "E2E P1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000018"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000019",
+      "username": "e2e-v32",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-v32@example.com",
+      "firstName": "E2E V32",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000019"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000020",
+      "username": "e2e-v34",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-v34@example.com",
+      "firstName": "E2E V34",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000020"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000021",
+      "username": "e2e-v37",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-v37@example.com",
+      "firstName": "E2E V37",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000021"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000022",
+      "username": "e2e-ui1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-ui1@example.com",
+      "firstName": "E2E UI1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000022"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    },
+    {
+      "id": "0000000e-2e00-0001-0000-000000000023",
+      "username": "e2e-t1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "e2e-t1@example.com",
+      "firstName": "E2E T1",
+      "lastName": "Runner",
+      "attributes": {
+        "tenant_id": [
+          "0000000e-2e00-0000-0000-000000000023"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "e2e",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
+      ]
+    }
+  ],
+  "scopeMappings": [],
+  "clientScopeMappings": {
+    "realm-management": [
+      {
+        "client": "aran-backend",
+        "roles": [
+          "manage-users",
+          "view-users"
+        ]
+      }
+    ]
+  },
+  "loginTheme": "aran",
+  "accountTheme": "keycloak.v3",
+  "id": "aran-e2e"
+}

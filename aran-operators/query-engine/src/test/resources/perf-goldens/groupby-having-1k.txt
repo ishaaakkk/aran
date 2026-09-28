@@ -1,0 +1,5 @@
+FILTER[>(n, 1)]
+  AGGREGATE[group=[grp], aggs=1]
+    UNION[all=true, inputs=2]
+      SCAN[u_c0s0_C0]
+      SCAN[u_c0s1_C0]

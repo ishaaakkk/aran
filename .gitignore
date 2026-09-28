@@ -1,0 +1,76 @@
+# --- Gradle ---
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# --- IntelliJ IDEA ---
+# Ignore workspace-local state but keep shared run configurations and code style
+.idea/
+!.idea/runConfigurations/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+*.iml
+*.ipr
+*.iws
+
+# --- VS Code ---
+.vscode/
+.settings/
+.project
+.classpath
+
+# --- Java ---
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+# --- Dev stack: the process groups scripts/startup.sh launched ---
+.run/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Frontend ---
+aran-web/node_modules/
+aran-web/dist/
+aran-web/.vite/
+# keep .env.example, never commit real .env
+aran-web/.env
+aran-web/.env.local
+aran-web/.env.*.local
+aran-web-vue-backup/
+
+# --- Local reference / scratch ---
+nextiadi/
+scratch/
+*.pdf
+
+# --- Aran: local env / secrets ---
+*.env
+.env
+.env.local
+.env.*.local
+application-local.yml
+application-local.yaml
+
+# --- Python (aran-lake, freyja) ---
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+
+
+# --- Written by the constrained-Docker session setup ---
+/aran-lake/.container-info.json
+/aran-application/.container-info.json
+
+
+# Public source export (scripts/export-public.sh)
+/dist/

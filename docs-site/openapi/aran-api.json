@@ -1,0 +1,7132 @@
+{
+  "components": {
+    "schemas": {
+      "AddConstraintRequest": {
+        "properties": {
+          "classIri": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "classIri",
+          "expression"
+        ],
+        "type": "object"
+      },
+      "AddMappingRequest": {
+        "properties": {
+          "comment": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "class",
+              "datatype",
+              "object",
+              "join"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "sourceIri": {
+            "type": "string"
+          },
+          "targetIri": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "comment",
+          "kind",
+          "label",
+          "sourceIri",
+          "targetIri"
+        ],
+        "type": "object"
+      },
+      "AddMemberRequest": {
+        "properties": {
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "userId"
+        ],
+        "type": "object"
+      },
+      "AddSourceRequest": {
+        "properties": {
+          "datasetId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "datasetId"
+        ],
+        "type": "object"
+      },
+      "AddTenantMemberRequest": {
+        "properties": {
+          "role": {
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "role",
+          "subject",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "AdminAddMemberRequest": {
+        "properties": {
+          "role": {
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "role",
+          "subject",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "AffectedMapping": {
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "mappingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "matchedIri": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ApiHealth": {
+        "properties": {
+          "components": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ComponentHealth"
+            },
+            "type": "object"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ApiTokenDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AuditEvent": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actorId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "targetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "tenantId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AuditLine": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "actor",
+          "target",
+          "ts"
+        ],
+        "type": "object"
+      },
+      "AuthPolicyDto": {
+        "properties": {
+          "methods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "requireTls": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ChangeRoleRequest": {
+        "properties": {
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "type": "object"
+      },
+      "ChangedClass": {
+        "properties": {
+          "addedProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "classIri": {
+            "type": "string"
+          },
+          "removedProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "wrapperChanged": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "CompileJobDto": {
+        "properties": {
+          "jobId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "jobType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId",
+          "jobType",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ComponentHealth": {
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ComponentStatus": {
+        "properties": {
+          "details": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ConnectionCheckDto": {
+        "properties": {
+          "details": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "testedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "details",
+          "message",
+          "success",
+          "testedAt"
+        ],
+        "type": "object"
+      },
+      "ConnectionTestResponse": {
+        "properties": {
+          "details": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "testedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ConstraintEnforcedRequest": {
+        "properties": {
+          "enforced": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enforced"
+        ],
+        "type": "object"
+      },
+      "CreateMemberRequest": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "email"
+        ],
+        "type": "object"
+      },
+      "CreateProductRequest": {
+        "properties": {
+          "accessMode": {
+            "enum": [
+              "MATERIALIZED",
+              "VIRTUAL"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "oql": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessMode",
+          "description",
+          "name",
+          "oql"
+        ],
+        "type": "object"
+      },
+      "CreateProjectRequest": {
+        "properties": {
+          "color": {
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          },
+          "privacy": {
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "color",
+          "description",
+          "name",
+          "name",
+          "privacy"
+        ],
+        "type": "object"
+      },
+      "CreateTenantRequest": {
+        "properties": {
+          "firstOwnerSubject": {
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          },
+          "plan": {
+            "enum": [
+              "FREE",
+              "PRO",
+              "ENTERPRISE"
+            ],
+            "type": "string"
+          },
+          "slug": {
+            "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstOwnerSubject",
+          "firstOwnerSubject",
+          "name",
+          "name",
+          "plan",
+          "plan",
+          "slug",
+          "slug"
+        ],
+        "type": "object"
+      },
+      "CreateTokenRequest": {
+        "properties": {
+          "expiryDays": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreatedMemberResponse": {
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberView"
+          },
+          "reinstated": {
+            "type": "boolean"
+          },
+          "temporaryPassword": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreatedTokenDto": {
+        "properties": {
+          "secret": {
+            "type": "string"
+          },
+          "token": {
+            "$ref": "#/components/schemas/ApiTokenDto"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardSummary": {
+        "properties": {
+          "activeSchemaVersion": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "datasets": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "draftSchemaVersion": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "projects": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "readyDatasets": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "recentAudit": {
+            "items": {
+              "$ref": "#/components/schemas/AuditLine"
+            },
+            "type": "array"
+          },
+          "repositories": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "activeSchemaVersion",
+          "datasets",
+          "draftSchemaVersion",
+          "projects",
+          "readyDatasets",
+          "recentAudit",
+          "repositories"
+        ],
+        "type": "object"
+      },
+      "DataProductDto": {
+        "properties": {
+          "accessMode": {
+            "enum": [
+              "MATERIALIZED",
+              "VIRTUAL"
+            ],
+            "type": "string"
+          },
+          "builtAgainstVersionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "materializedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "memberOfCube": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "oql": {
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rowCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schemaVersionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "servedOverIceberg": {
+            "type": "boolean"
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "MATERIALIZING",
+              "READY",
+              "STALE",
+              "FAILED"
+            ],
+            "type": "string"
+          },
+          "tableName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessMode",
+          "builtAgainstVersionId",
+          "createdAt",
+          "createdBy",
+          "description",
+          "id",
+          "lastError",
+          "materializedAt",
+          "memberOfCube",
+          "name",
+          "oql",
+          "projectId",
+          "rowCount",
+          "schemaVersionId",
+          "servedOverIceberg",
+          "snapshotId",
+          "status",
+          "tableName"
+        ],
+        "type": "object"
+      },
+      "DataRepositoryRequest": {
+        "discriminator": {
+          "propertyName": "type"
+        },
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "DataRepositoryResponse": {
+        "discriminator": {
+          "propertyName": "type"
+        },
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "DatasetCreatedResponse": {
+        "properties": {
+          "bootstrapJobId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "bootstrapStatus": {
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "READY",
+              "FAILED",
+              "CANCELLED",
+              "DRIFTED"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "repositoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bootstrapJobId",
+          "bootstrapStatus",
+          "description",
+          "id",
+          "name",
+          "repositoryId",
+          "snapshotId"
+        ],
+        "type": "object"
+      },
+      "DatasetPreview": {
+        "properties": {
+          "headers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "DatasetProfilesResponse": {
+        "properties": {
+          "datasetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileGroup"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "datasetId",
+          "groups"
+        ],
+        "type": "object"
+      },
+      "DatasetRequest": {
+        "properties": {
+          "description": {
+            "maxLength": 4000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "name",
+          "name"
+        ],
+        "type": "object"
+      },
+      "DatasetResponse": {
+        "properties": {
+          "accessMode": {
+            "enum": [
+              "SNAPSHOT",
+              "LIVE",
+              "LIVE_WITH_COPY"
+            ],
+            "type": "string"
+          },
+          "bootstrapStatus": {
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "READY",
+              "FAILED",
+              "CANCELLED",
+              "DRIFTED"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "repositoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessMode",
+          "bootstrapStatus",
+          "description",
+          "id",
+          "name",
+          "repositoryId",
+          "snapshotId"
+        ],
+        "type": "object"
+      },
+      "DatasetStorage": {
+        "properties": {
+          "datasetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "logicalBytes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshotCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "DiscoverConstraintsRequest": {
+        "properties": {
+          "classIri": {
+            "type": "string"
+          },
+          "datasetId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "classIri",
+          "datasetId"
+        ],
+        "type": "object"
+      },
+      "DraftRunDto": {
+        "properties": {
+          "compiledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "draftVersionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "draftVersionNumber": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "runId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "compiledAt",
+          "draftVersionId",
+          "draftVersionNumber",
+          "mode",
+          "runId"
+        ],
+        "type": "object"
+      },
+      "DriftImpact": {
+        "properties": {
+          "affected": {
+            "items": {
+              "$ref": "#/components/schemas/AffectedMapping"
+            },
+            "type": "array"
+          },
+          "change": {
+            "$ref": "#/components/schemas/SchemaChange"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "INFO",
+              "WARNING",
+              "BREAKING"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DriftReport": {
+        "properties": {
+          "baselineHash": {
+            "type": "string"
+          },
+          "candidateHash": {
+            "type": "string"
+          },
+          "datasetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "impacts": {
+            "items": {
+              "$ref": "#/components/schemas/DriftImpact"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ExportRequest": {
+        "properties": {
+          "format": {
+            "type": "string"
+          },
+          "oql": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Features": {
+        "properties": {
+          "cubes": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "FileSystemRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryRequest"
+          },
+          {
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "description",
+          "name",
+          "name"
+        ]
+      },
+      "FileSystemRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryResponse"
+          },
+          {
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "lastConnectionCheck": {
+                "$ref": "#/components/schemas/ConnectionCheckDto"
+              },
+              "name": {
+                "type": "string"
+              },
+              "projectId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "tenantId": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "description",
+          "id",
+          "lastConnectionCheck",
+          "name",
+          "projectId",
+          "tenantId"
+        ]
+      },
+      "FingerprintCapture": {
+        "properties": {
+          "capturedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "capturedVia": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GraphEdgeDto": {
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "source",
+          "target"
+        ],
+        "type": "object"
+      },
+      "GraphNodeDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "iri": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "iri",
+          "label",
+          "type"
+        ],
+        "type": "object"
+      },
+      "IcebergRestRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryRequest"
+          },
+          {
+            "properties": {
+              "accessKey": {
+                "type": "string"
+              },
+              "catalogUri": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "secretKey": {
+                "type": "string"
+              },
+              "token": {
+                "type": "string"
+              },
+              "warehouse": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "accessKey",
+          "catalogUri",
+          "catalogUri",
+          "description",
+          "endpoint",
+          "name",
+          "name",
+          "provider",
+          "region",
+          "secretKey",
+          "token",
+          "warehouse"
+        ]
+      },
+      "IcebergRestRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryResponse"
+          },
+          {
+            "properties": {
+              "accessKey": {
+                "type": "string"
+              },
+              "catalogUri": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "lastConnectionCheck": {
+                "$ref": "#/components/schemas/ConnectionCheckDto"
+              },
+              "name": {
+                "type": "string"
+              },
+              "projectId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "secretKey": {
+                "type": "string"
+              },
+              "tenantId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "token": {
+                "type": "string"
+              },
+              "warehouse": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "accessKey",
+          "catalogUri",
+          "description",
+          "endpoint",
+          "id",
+          "lastConnectionCheck",
+          "name",
+          "projectId",
+          "provider",
+          "region",
+          "secretKey",
+          "tenantId",
+          "token",
+          "warehouse"
+        ]
+      },
+      "ImportIcebergTableRequest": {
+        "properties": {
+          "tableIdentifier": {
+            "maxLength": 512,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "tableIdentifier",
+          "tableIdentifier"
+        ],
+        "type": "object"
+      },
+      "ImportStreamRequest": {
+        "properties": {
+          "stream": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "stream",
+          "stream"
+        ],
+        "type": "object"
+      },
+      "ImportTableRequest": {
+        "properties": {
+          "tableName": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "tableName",
+          "tableName"
+        ],
+        "type": "object"
+      },
+      "IntegrationModelDto": {
+        "properties": {
+          "activeIntegrationRunId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rebuildRequired": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activeIntegrationRunId",
+          "createdAt",
+          "id",
+          "projectId",
+          "rebuildRequired",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "InvocationRequest": {
+        "properties": {
+          "operation": {
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "JobDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "jobType": {
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "progressPercent": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "progressStage": {
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/JobSubjectDto"
+          }
+        },
+        "required": [
+          "createdAt",
+          "createdBy",
+          "errorCode",
+          "errorMessage",
+          "finishedAt",
+          "id",
+          "jobType",
+          "parameters",
+          "progressPercent",
+          "progressStage",
+          "projectId",
+          "result",
+          "startedAt",
+          "status",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "JobSubjectDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "repositoryId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "repositoryId"
+        ],
+        "type": "object"
+      },
+      "JobSubmission": {
+        "properties": {
+          "jobId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId"
+        ],
+        "type": "object"
+      },
+      "JsonNode": {
+        "properties": {
+          "array": {
+            "type": "boolean"
+          },
+          "bigDecimal": {
+            "type": "boolean"
+          },
+          "bigInteger": {
+            "type": "boolean"
+          },
+          "binary": {
+            "type": "boolean"
+          },
+          "boolean": {
+            "type": "boolean"
+          },
+          "container": {
+            "type": "boolean"
+          },
+          "double": {
+            "type": "boolean"
+          },
+          "embeddedValue": {
+            "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
+          },
+          "float": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "int": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "long": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "nodeType": {
+            "enum": [
+              "ARRAY",
+              "BINARY",
+              "BOOLEAN",
+              "MISSING",
+              "NULL",
+              "NUMBER",
+              "OBJECT",
+              "POJO",
+              "STRING"
+            ],
+            "type": "string"
+          },
+          "null": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "boolean"
+          },
+          "object": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
+          "short": {
+            "type": "boolean"
+          },
+          "string": {
+            "type": "boolean"
+          },
+          "textual": {
+            "deprecated": true,
+            "type": "boolean"
+          },
+          "valueNode": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "LicenseSummaryResponse": {
+        "properties": {
+          "currentProjects": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "currentUsers": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "features": {
+            "items": {
+              "enum": [
+                "AUDIT_LOG_EXPORT"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "maxProjects": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxUsers": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "mutationsAllowed": {
+            "type": "boolean"
+          },
+          "plan": {
+            "enum": [
+              "FREE",
+              "PRO",
+              "ENTERPRISE"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED"
+            ],
+            "type": "string"
+          },
+          "tenantId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentProjects",
+          "currentUsers",
+          "expiresAt",
+          "features",
+          "maxProjects",
+          "maxUsers",
+          "mutationsAllowed",
+          "plan",
+          "status",
+          "tenantId"
+        ],
+        "type": "object"
+      },
+      "MappingApplicationDto": {
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "versionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "state",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "MappingStatusRequest": {
+        "properties": {
+          "status": {
+            "enum": [
+              "SUGGESTED",
+              "ACCEPTED",
+              "REJECTED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "MeResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "features": {
+            "$ref": "#/components/schemas/Features"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "tenants": {
+            "items": {
+              "$ref": "#/components/schemas/TenantMembershipView"
+            },
+            "type": "array"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MemberUsage": {
+        "properties": {
+          "bytesIn": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "bytesOut": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "events": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "p95DurationMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ],
+            "type": "string"
+          },
+          "rows": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MemberView": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ],
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Membership": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ],
+            "type": "string"
+          },
+          "tenantId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ModelBundleDto": {
+        "properties": {
+          "activeVersion": {
+            "$ref": "#/components/schemas/VersionRefDto"
+          },
+          "baselineVersionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "compileJob": {
+            "$ref": "#/components/schemas/CompileJobDto"
+          },
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/ModelConstraintDto"
+            },
+            "type": "array"
+          },
+          "integratedDatasetIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "latestDraftRun": {
+            "$ref": "#/components/schemas/DraftRunDto"
+          },
+          "mappings": {
+            "items": {
+              "$ref": "#/components/schemas/ModelMappingDto"
+            },
+            "type": "array"
+          },
+          "model": {
+            "$ref": "#/components/schemas/IntegrationModelDto"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ModelSourceDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "activeVersion",
+          "baselineVersionId",
+          "compileJob",
+          "constraints",
+          "integratedDatasetIds",
+          "latestDraftRun",
+          "mappings",
+          "model",
+          "sources"
+        ],
+        "type": "object"
+      },
+      "ModelConstraintDto": {
+        "properties": {
+          "classIri": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "enforced": {
+            "type": "boolean"
+          },
+          "expression": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "orphaned": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "classIri",
+          "createdAt",
+          "enforced",
+          "expression",
+          "id",
+          "origin",
+          "orphaned"
+        ],
+        "type": "object"
+      },
+      "ModelMappingDto": {
+        "properties": {
+          "application": {
+            "$ref": "#/components/schemas/MappingApplicationDto"
+          },
+          "author": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/JsonNode"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "class",
+              "datatype",
+              "object",
+              "join"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "sourceIri": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "SUGGESTED",
+              "ACCEPTED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "targetIri": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "application",
+          "author",
+          "comment",
+          "createdAt",
+          "evidence",
+          "id",
+          "kind",
+          "label",
+          "sourceIri",
+          "status",
+          "targetIri"
+        ],
+        "type": "object"
+      },
+      "ModelSourceDto": {
+        "properties": {
+          "classIri": {
+            "type": "string"
+          },
+          "datasetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "expansionReason": {
+            "type": "string"
+          },
+          "expansionStatus": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "wrapperEdited": {
+            "type": "boolean"
+          },
+          "wrapperSql": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "classIri",
+          "datasetId",
+          "expansionReason",
+          "expansionStatus",
+          "id",
+          "wrapperEdited",
+          "wrapperSql"
+        ],
+        "type": "object"
+      },
+      "ObjectStorageRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryRequest"
+          },
+          {
+            "properties": {
+              "accessKey": {
+                "type": "string"
+              },
+              "bucketName": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "secretKey": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "accessKey",
+          "bucketName",
+          "bucketName",
+          "description",
+          "endpoint",
+          "name",
+          "name",
+          "provider",
+          "provider",
+          "region",
+          "secretKey"
+        ]
+      },
+      "ObjectStorageRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryResponse"
+          },
+          {
+            "properties": {
+              "accessKey": {
+                "type": "string"
+              },
+              "bucketName": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "lastConnectionCheck": {
+                "$ref": "#/components/schemas/ConnectionCheckDto"
+              },
+              "name": {
+                "type": "string"
+              },
+              "projectId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "secretKey": {
+                "type": "string"
+              },
+              "tenantId": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "accessKey",
+          "bucketName",
+          "description",
+          "endpoint",
+          "id",
+          "lastConnectionCheck",
+          "name",
+          "projectId",
+          "provider",
+          "region",
+          "secretKey",
+          "tenantId"
+        ]
+      },
+      "OperationSpec": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "longRunning": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/components/schemas/ParameterSpec"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "OperatorManifest": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/OperationSpec"
+            },
+            "type": "array"
+          },
+          "operatorId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OperatorResult": {
+        "properties": {
+          "data": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "Orphans": {
+        "properties": {
+          "bytes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "known": {
+            "type": "boolean"
+          },
+          "scanned": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshots": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Overview": {
+        "properties": {
+          "activeTokenCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "memberCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MemberUsage"
+            },
+            "type": "array"
+          },
+          "since": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "tenantSlug": {
+            "type": "string"
+          },
+          "totalBytesIn": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalBytesOut": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalBytesStored": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalEvents": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalRows": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ParameterSpec": {
+        "properties": {
+          "defaultValue": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProfileGroup": {
+        "properties": {
+          "classIri": {
+            "type": "string"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/StoredColumnProfile"
+            },
+            "type": "array"
+          },
+          "keyEvidence": {
+            "type": "boolean"
+          },
+          "subject": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "classIri",
+          "columns",
+          "keyEvidence",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "ProjectMemberResponse": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "addedAt",
+          "userId"
+        ],
+        "type": "object"
+      },
+      "ProjectRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectResponse": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "privacy": {
+            "type": "string"
+          },
+          "progress": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tenantId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "color",
+          "createdAt",
+          "createdBy",
+          "description",
+          "id",
+          "name",
+          "privacy",
+          "progress",
+          "status",
+          "tenantId"
+        ],
+        "type": "object"
+      },
+      "PromoteRequest": {
+        "properties": {
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "notes"
+        ],
+        "type": "object"
+      },
+      "PromoteResponse": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "notes",
+          "status",
+          "versionNumber"
+        ],
+        "type": "object"
+      },
+      "PromoteRunResponse": {
+        "properties": {
+          "versionId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "versionId",
+          "versionNumber"
+        ],
+        "type": "object"
+      },
+      "RefreshPolicyRequest": {
+        "properties": {
+          "intervalSeconds": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "policy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy"
+        ],
+        "type": "object"
+      },
+      "RefreshResponse": {
+        "properties": {
+          "datasetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "intervalSeconds": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "lastRefreshAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nextRunAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "policy": {
+            "type": "string"
+          },
+          "sourceTable": {
+            "type": "string"
+          },
+          "stalenessSeconds": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RefreshStartedResponse": {
+        "properties": {
+          "jobId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RelationalDatabaseRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryRequest"
+          },
+          {
+            "properties": {
+              "database": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "engine": {
+                "type": "string"
+              },
+              "federated": {
+                "type": "boolean"
+              },
+              "host": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              },
+              "port": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "schema": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "database",
+          "database",
+          "description",
+          "engine",
+          "engine",
+          "federated",
+          "host",
+          "host",
+          "name",
+          "name",
+          "password",
+          "port",
+          "port",
+          "schema",
+          "username"
+        ]
+      },
+      "RelationalDatabaseRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryResponse"
+          },
+          {
+            "properties": {
+              "database": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "engine": {
+                "type": "string"
+              },
+              "federated": {
+                "type": "boolean"
+              },
+              "host": {
+                "type": "string"
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "lastConnectionCheck": {
+                "$ref": "#/components/schemas/ConnectionCheckDto"
+              },
+              "name": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              },
+              "port": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "projectId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "schema": {
+                "type": "string"
+              },
+              "tenantId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "database",
+          "description",
+          "engine",
+          "federated",
+          "host",
+          "id",
+          "lastConnectionCheck",
+          "name",
+          "password",
+          "port",
+          "projectId",
+          "schema",
+          "tenantId",
+          "username"
+        ]
+      },
+      "RelationalEngineResponse": {
+        "properties": {
+          "bulkExtract": {
+            "type": "string"
+          },
+          "bulkExtractReady": {
+            "type": "boolean"
+          },
+          "defaultPort": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "supportsFederation": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "RemovedMemberResponse": {
+        "properties": {
+          "projectAccessRemoved": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "projectsHandedOver": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectRef"
+            },
+            "type": "array"
+          },
+          "tokensRevoked": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RenameRequest": {
+        "properties": {
+          "fromIri": {
+            "type": "string"
+          },
+          "toIri": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromIri",
+          "toIri"
+        ],
+        "type": "object"
+      },
+      "RepairRequest": {
+        "properties": {
+          "renames": {
+            "items": {
+              "$ref": "#/components/schemas/RenameRequest"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "RepairResponse": {
+        "properties": {
+          "models": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rewritten": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RepositoryTypeResponse": {
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SchemaChange": {
+        "properties": {
+          "after": {
+            "type": "string"
+          },
+          "before": {
+            "type": "string"
+          },
+          "classIri": {
+            "type": "string"
+          },
+          "confidence": {
+            "format": "double",
+            "type": "number"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "CLASS_ADDED",
+              "CLASS_REMOVED",
+              "CLASS_IRI_CHANGED",
+              "COLUMN_ADDED",
+              "COLUMN_REMOVED",
+              "COLUMN_RENAMED",
+              "TYPE_CHANGED",
+              "FORMAT_CHANGED"
+            ],
+            "type": "string"
+          },
+          "propertyIri": {
+            "type": "string"
+          },
+          "replacementIri": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SchemaDiff": {
+        "properties": {
+          "addedClasses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "changedClasses": {
+            "items": {
+              "$ref": "#/components/schemas/ChangedClass"
+            },
+            "type": "array"
+          },
+          "empty": {
+            "type": "boolean"
+          },
+          "removedClasses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SchemaGraphResponseDto": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdgeDto"
+            },
+            "type": "array"
+          },
+          "empty": {
+            "type": "boolean"
+          },
+          "graphUri": {
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNodeDto"
+            },
+            "type": "array"
+          },
+          "tripleCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "versionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "edges",
+          "empty",
+          "graphUri",
+          "nodes",
+          "tripleCount",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "SingerTapRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryRequest"
+          },
+          {
+            "properties": {
+              "config": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "description": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "tapId": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "config",
+          "description",
+          "name",
+          "name",
+          "tapId",
+          "tapId"
+        ]
+      },
+      "SingerTapRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DataRepositoryResponse"
+          },
+          {
+            "properties": {
+              "config": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "description": {
+                "type": "string"
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "lastConnectionCheck": {
+                "$ref": "#/components/schemas/ConnectionCheckDto"
+              },
+              "name": {
+                "type": "string"
+              },
+              "projectId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "tapId": {
+                "type": "string"
+              },
+              "tenantId": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "required": [
+          "config",
+          "description",
+          "id",
+          "lastConnectionCheck",
+          "name",
+          "projectId",
+          "tapId",
+          "tenantId"
+        ]
+      },
+      "SingerTapResponse": {
+        "properties": {
+          "configKeys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "secretKeys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "type": "object"
+      },
+      "SourceGraphResponseDto": {
+        "properties": {
+          "datasetId": {
+            "type": "string"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdgeDto"
+            },
+            "type": "array"
+          },
+          "empty": {
+            "type": "boolean"
+          },
+          "graphUri": {
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNodeDto"
+            },
+            "type": "array"
+          },
+          "tripleCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "datasetId",
+          "edges",
+          "empty",
+          "graphUri",
+          "nodes",
+          "tripleCount"
+        ],
+        "type": "object"
+      },
+      "SseEmitter": {
+        "properties": {
+          "timeout": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "StorageReport": {
+        "properties": {
+          "baselineMeasuredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "baselinePhysicalBytes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetStorage"
+            },
+            "type": "array"
+          },
+          "datasetsTruncated": {
+            "type": "boolean"
+          },
+          "logicalBytes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "newestSnapshotAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "oldestSnapshotAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "physicalBytes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshotCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "unreferenced": {
+            "$ref": "#/components/schemas/Orphans"
+          }
+        },
+        "type": "object"
+      },
+      "StoredColumnProfile": {
+        "properties": {
+          "binaryColumn": {
+            "type": "boolean"
+          },
+          "cardinality": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "columnIndex": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "columnName": {
+            "type": "string"
+          },
+          "commonValues": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "commonValuesSoundex": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "constancy": {
+            "format": "double",
+            "type": "number"
+          },
+          "emptyColumn": {
+            "type": "boolean"
+          },
+          "entropy": {
+            "format": "double",
+            "type": "number"
+          },
+          "firstWord": {
+            "type": "string"
+          },
+          "frequencyAvg": {
+            "format": "double",
+            "type": "number"
+          },
+          "frequencyIqr": {
+            "format": "double",
+            "type": "number"
+          },
+          "frequencyMax": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "frequencyMin": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "frequencySd": {
+            "format": "double",
+            "type": "number"
+          },
+          "incompleteness": {
+            "format": "double",
+            "type": "number"
+          },
+          "lastWord": {
+            "type": "string"
+          },
+          "lenAvgWord": {
+            "format": "double",
+            "type": "number"
+          },
+          "lenMaxWord": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "lenMinWord": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "numberWords": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "uniqueness": {
+            "format": "double",
+            "type": "number"
+          },
+          "valPctMax": {
+            "format": "double",
+            "type": "number"
+          },
+          "valPctMin": {
+            "format": "double",
+            "type": "number"
+          },
+          "valPctStd": {
+            "format": "double",
+            "type": "number"
+          },
+          "wordsCntAvg": {
+            "format": "double",
+            "type": "number"
+          },
+          "wordsCntMax": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "wordsCntMin": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "wordsCntSd": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "binaryColumn",
+          "cardinality",
+          "columnIndex",
+          "columnName",
+          "commonValues",
+          "commonValuesSoundex",
+          "constancy",
+          "emptyColumn",
+          "entropy",
+          "firstWord",
+          "frequencyAvg",
+          "frequencyIqr",
+          "frequencyMax",
+          "frequencyMin",
+          "frequencySd",
+          "incompleteness",
+          "lastWord",
+          "lenAvgWord",
+          "lenMaxWord",
+          "lenMinWord",
+          "numberWords",
+          "sourceType",
+          "uniqueness",
+          "valPctMax",
+          "valPctMin",
+          "valPctStd",
+          "wordsCntAvg",
+          "wordsCntMax",
+          "wordsCntMin",
+          "wordsCntSd"
+        ],
+        "type": "object"
+      },
+      "SuggestRequest": {
+        "properties": {
+          "leftDatasetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rightDatasetId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "leftDatasetId",
+          "rightDatasetId"
+        ],
+        "type": "object"
+      },
+      "SystemStatus": {
+        "properties": {
+          "commit": {
+            "type": "string"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentStatus"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TenantMembershipView": {
+        "properties": {
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ],
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "tenantId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TenantResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt",
+          "id",
+          "name",
+          "slug"
+        ],
+        "type": "object"
+      },
+      "TokenSummary": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ownerName": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VersionRefDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNumber": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNumber"
+        ],
+        "type": "object"
+      },
+      "VersionSummary": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "promotedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "createdAt",
+          "createdBy",
+          "id",
+          "notes",
+          "promotedAt",
+          "status",
+          "versionNumber"
+        ],
+        "type": "object"
+      },
+      "WrapperRequest": {
+        "properties": {
+          "classIri": {
+            "type": "string"
+          },
+          "sql": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "classIri",
+          "sql"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/admin/tenants": {
+      "post": {
+        "operationId": "createTenant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenants-admin-endpoints"
+        ]
+      }
+    },
+    "/api/admin/tenants/{tenantId}/members": {
+      "post": {
+        "operationId": "addMember_2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminAddMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenants-admin-endpoints"
+        ]
+      }
+    },
+    "/api/auth/policy": {
+      "get": {
+        "operationId": "policy",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthPolicyDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-policy-controller"
+        ]
+      }
+    },
+    "/api/dashboard/summary": {
+      "get": {
+        "operationId": "summary",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dashboard-controller"
+        ]
+      }
+    },
+    "/api/graph/promote/{draftVersionId}": {
+      "post": {
+        "operationId": "promoteDraft",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "draftVersionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoteResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "source-graph-controller"
+        ]
+      }
+    },
+    "/api/graph/schema/{versionId}": {
+      "get": {
+        "operationId": "getSchemaGraph",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaGraphResponseDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "source-graph-controller"
+        ]
+      }
+    },
+    "/api/graph/source/{datasetId}": {
+      "get": {
+        "operationId": "getSourceGraph",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceGraphResponseDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "source-graph-controller"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiHealth"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "api-health-controller"
+        ]
+      }
+    },
+    "/api/iceberg/files/{productId}/{snapshotId}/data/data.parquet": {
+      "get": {
+        "operationId": "dataFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "snapshotId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-file-controller"
+        ]
+      }
+    },
+    "/api/iceberg/files/{productId}/{snapshotId}/metadata/{file}": {
+      "get": {
+        "operationId": "metadataFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "snapshotId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "file",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-file-controller"
+        ]
+      }
+    },
+    "/api/iceberg/v1/config": {
+      "get": {
+        "operationId": "config",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonNode"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-catalog-controller"
+        ]
+      }
+    },
+    "/api/iceberg/v1/namespaces": {
+      "get": {
+        "operationId": "listNamespaces",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonNode"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-catalog-controller"
+        ]
+      }
+    },
+    "/api/iceberg/v1/namespaces/{namespace}": {
+      "get": {
+        "operationId": "loadNamespace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonNode"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-catalog-controller"
+        ]
+      }
+    },
+    "/api/iceberg/v1/namespaces/{namespace}/tables": {
+      "get": {
+        "operationId": "listTables",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonNode"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-catalog-controller"
+        ]
+      }
+    },
+    "/api/iceberg/v1/namespaces/{namespace}/tables/{table}": {
+      "get": {
+        "operationId": "loadTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "table",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonNode"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-catalog-controller"
+        ]
+      },
+      "head": {
+        "operationId": "tableExists",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "table",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "iceberg-catalog-controller"
+        ]
+      }
+    },
+    "/api/jdbc": {
+      "post": {
+        "operationId": "handle",
+        "requestBody": {
+          "content": {
+            "*/*": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "jdbc-endpoint-controller"
+        ]
+      }
+    },
+    "/api/jobs": {
+      "get": {
+        "operationId": "list_4",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/JobDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "job-controller"
+        ]
+      }
+    },
+    "/api/jobs/{jobId}": {
+      "get": {
+        "operationId": "get_2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "job-controller"
+        ]
+      }
+    },
+    "/api/jobs/{jobId}/events": {
+      "get": {
+        "operationId": "events",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/SseEmitter"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "job-events-controller"
+        ]
+      }
+    },
+    "/api/me": {
+      "get": {
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "me-controller"
+        ]
+      }
+    },
+    "/api/operators": {
+      "get": {
+        "operationId": "listOperators",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OperatorManifest"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "operator-invocation-controller"
+        ]
+      }
+    },
+    "/api/operators/{operatorId}/invoke": {
+      "post": {
+        "operationId": "invoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operatorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvocationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorResult"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "operator-invocation-controller"
+        ]
+      }
+    },
+    "/api/operators/{operatorId}/submit": {
+      "post": {
+        "operationId": "submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operatorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvocationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "operator-invocation-controller"
+        ]
+      }
+    },
+    "/api/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "project-controller"
+        ]
+      },
+      "post": {
+        "operationId": "createProject",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "project-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}": {
+      "get": {
+        "operationId": "getProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "project-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/members": {
+      "get": {
+        "operationId": "listMembers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectMemberResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "project-controller"
+        ]
+      },
+      "post": {
+        "operationId": "addMember_1",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMemberResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "project-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/members/{userId}": {
+      "delete": {
+        "operationId": "removeMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "project-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model": {
+      "get": {
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelBundleDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/compile": {
+      "post": {
+        "operationId": "compile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/constraints": {
+      "post": {
+        "operationId": "addConstraint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddConstraintRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelConstraintDto"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/constraints/discover": {
+      "post": {
+        "operationId": "discoverConstraints",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscoverConstraintsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/constraints/{constraintId}": {
+      "delete": {
+        "operationId": "deleteConstraint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "constraintId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      },
+      "patch": {
+        "operationId": "updateConstraint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "constraintId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstraintEnforcedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/incremental-integrate": {
+      "post": {
+        "operationId": "incrementalIntegrate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/mappings": {
+      "post": {
+        "operationId": "addMapping",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMappingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelMappingDto"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/mappings/{mappingId}": {
+      "delete": {
+        "operationId": "deleteMapping",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mappingId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      },
+      "patch": {
+        "operationId": "updateMapping",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mappingId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/runs/{runId}/promote": {
+      "post": {
+        "operationId": "promoteRun",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoteRunResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/sources": {
+      "post": {
+        "operationId": "addSource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelSourceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/sources/{datasetId}": {
+      "delete": {
+        "operationId": "removeSource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/sources/{datasetId}/wrappers": {
+      "put": {
+        "operationId": "setWrapper",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WrapperRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/model/suggest": {
+      "post": {
+        "operationId": "suggest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelMappingDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "integration-model-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/products": {
+      "get": {
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DataProductDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-product-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataProductDto"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "data-product-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/products/{productId}": {
+      "delete": {
+        "operationId": "delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-product-controller"
+        ]
+      },
+      "get": {
+        "operationId": "get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataProductDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-product-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/products/{productId}/materialize": {
+      "post": {
+        "operationId": "materialize",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmission"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-product-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/products/{productId}/preview": {
+      "get": {
+        "operationId": "preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-product-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories": {
+      "get": {
+        "operationId": "listRepositories",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FileSystemRepositoryResponse"
+                      },
+                      {
+                        "$ref": "#/components/schemas/IcebergRestRepositoryResponse"
+                      },
+                      {
+                        "$ref": "#/components/schemas/ObjectStorageRepositoryResponse"
+                      },
+                      {
+                        "$ref": "#/components/schemas/RelationalDatabaseRepositoryResponse"
+                      },
+                      {
+                        "$ref": "#/components/schemas/SingerTapRepositoryResponse"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-repository-controller"
+        ]
+      },
+      "post": {
+        "operationId": "createRepository",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/FileSystemRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/IcebergRestRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ObjectStorageRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RelationalDatabaseRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SingerTapRepositoryRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/FileSystemRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/IcebergRestRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ObjectStorageRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RelationalDatabaseRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SingerTapRepositoryResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-repository-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/test-connection": {
+      "post": {
+        "operationId": "testConnection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/FileSystemRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/IcebergRestRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ObjectStorageRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RelationalDatabaseRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SingerTapRepositoryRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-repository-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}": {
+      "delete": {
+        "operationId": "deleteRepository",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-repository-controller"
+        ]
+      },
+      "put": {
+        "operationId": "updateRepository",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/FileSystemRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/IcebergRestRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ObjectStorageRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RelationalDatabaseRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SingerTapRepositoryRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/FileSystemRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/IcebergRestRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ObjectStorageRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RelationalDatabaseRepositoryResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SingerTapRepositoryResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-repository-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets": {
+      "get": {
+        "operationId": "listDatasets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DatasetResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      },
+      "post": {
+        "operationId": "registerDataset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatasetRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "dataset": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "dataset",
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetCreatedResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/import": {
+      "post": {
+        "operationId": "importDatasetFromTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetCreatedResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/import-iceberg": {
+      "post": {
+        "operationId": "importDatasetFromIcebergTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportIcebergTableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetCreatedResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/import-stream": {
+      "post": {
+        "operationId": "importDatasetFromStream",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetCreatedResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/refresh-policies": {
+      "get": {
+        "operationId": "listPolicies",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RefreshResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-refresh-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}": {
+      "delete": {
+        "operationId": "deleteDataset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      },
+      "put": {
+        "operationId": "updateDataset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatasetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/drift": {
+      "get": {
+        "operationId": "check",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filenameHint",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriftReport"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-drift-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/drift/history": {
+      "get": {
+        "operationId": "history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FingerprintCapture"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-drift-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/drift/repair": {
+      "post": {
+        "operationId": "repair",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepairRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-drift-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/preview": {
+      "get": {
+        "operationId": "previewDatasetById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetPreview"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/preview-wrapper": {
+      "post": {
+        "operationId": "previewWrapper",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetPreview"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/profiles": {
+      "get": {
+        "operationId": "listColumnProfiles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetProfilesResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/refresh": {
+      "post": {
+        "operationId": "refreshNow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshStartedResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-refresh-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/datasets/{datasetId}/refresh-policy": {
+      "get": {
+        "operationId": "getPolicy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-refresh-controller"
+        ]
+      },
+      "put": {
+        "operationId": "setPolicy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-refresh-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/preview": {
+      "get": {
+        "operationId": "previewDataset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "datasetName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetPreview"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/scan": {
+      "get": {
+        "operationId": "scanAvailableDatasets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dataset-controller"
+        ]
+      }
+    },
+    "/api/projects/{projectId}/repositories/{repositoryId}/test-connection": {
+      "post": {
+        "operationId": "testStoredConnection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repositoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/FileSystemRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/IcebergRestRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ObjectStorageRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RelationalDatabaseRepositoryRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SingerTapRepositoryRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "data-repository-controller"
+        ]
+      }
+    },
+    "/api/query/export": {
+      "post": {
+        "operationId": "export",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "query-export-controller"
+        ]
+      }
+    },
+    "/api/relational-engines": {
+      "get": {
+        "operationId": "listEngines",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RelationalEngineResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "relational-engine-controller"
+        ]
+      }
+    },
+    "/api/repository-types": {
+      "get": {
+        "operationId": "listRepositoryTypes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RepositoryTypeResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "repository-type-controller"
+        ]
+      }
+    },
+    "/api/schema/versions": {
+      "get": {
+        "operationId": "list_3",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VersionSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schema-version-controller"
+        ]
+      }
+    },
+    "/api/schema/versions/{a}/diff/{b}": {
+      "get": {
+        "operationId": "diff",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "a",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "b",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaDiff"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schema-version-controller"
+        ]
+      }
+    },
+    "/api/schema/versions/{id}/rollback": {
+      "post": {
+        "operationId": "rollback",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schema-version-controller"
+        ]
+      }
+    },
+    "/api/singer-taps": {
+      "get": {
+        "operationId": "listTaps",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SingerTapResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "singer-tap-controller"
+        ]
+      }
+    },
+    "/api/tenant/admin/activity": {
+      "get": {
+        "operationId": "activity",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEvent"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-admin-controller"
+        ]
+      }
+    },
+    "/api/tenant/admin/overview": {
+      "get": {
+        "operationId": "overview",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-admin-controller"
+        ]
+      }
+    },
+    "/api/tenant/admin/storage": {
+      "get": {
+        "operationId": "storage",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageReport"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-admin-controller"
+        ]
+      }
+    },
+    "/api/tenant/admin/system": {
+      "get": {
+        "operationId": "status",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatus"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "system-status-controller"
+        ]
+      }
+    },
+    "/api/tenant/admin/tokens": {
+      "get": {
+        "operationId": "tokens",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TokenSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-admin-controller"
+        ]
+      }
+    },
+    "/api/tenant/admin/tokens/{tokenId}": {
+      "delete": {
+        "operationId": "revokeToken",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-admin-controller"
+        ]
+      }
+    },
+    "/api/tenant/members": {
+      "get": {
+        "operationId": "list_1",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-member-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedMemberResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-member-controller"
+        ]
+      }
+    },
+    "/api/tenant/members/{userId}": {
+      "delete": {
+        "operationId": "remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedMemberResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-member-controller"
+        ]
+      }
+    },
+    "/api/tenant/members/{userId}/password": {
+      "post": {
+        "operationId": "resetPassword",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedMemberResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-member-controller"
+        ]
+      }
+    },
+    "/api/tenant/members/{userId}/role": {
+      "put": {
+        "operationId": "changeRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberView"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-member-controller"
+        ]
+      }
+    },
+    "/api/tenants/{tenantId}/license": {
+      "get": {
+        "operationId": "getLicense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseSummaryResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-owner-controller"
+        ]
+      }
+    },
+    "/api/tenants/{tenantId}/members": {
+      "post": {
+        "operationId": "addMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTenantMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-owner-controller"
+        ]
+      }
+    },
+    "/api/tenants/{tenantId}/membership/me": {
+      "delete": {
+        "operationId": "leaveTenant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "tenant-owner-controller"
+        ]
+      }
+    },
+    "/api/tokens": {
+      "get": {
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiTokenDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "api-token-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedTokenDto"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "api-token-controller"
+        ]
+      }
+    },
+    "/api/tokens/{tokenId}": {
+      "delete": {
+        "operationId": "revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "api-token-controller"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Generated server url",
+      "url": "http://localhost"
+    }
+  ]
+}

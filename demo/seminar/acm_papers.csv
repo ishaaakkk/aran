@@ -1,0 +1,41 @@
+paper_id,title,year,venue,author_id
+ACM001,Federated Query Processing over Heterogeneous RDF Graphs,2022,ISWC,R001
+ACM001,Federated Query Processing over Heterogeneous RDF Graphs,2022,ISWC,R006
+ACM002,Open Data Integration at Scale,2024,VLDB,R002
+ACM002,Open Data Integration at Scale,2024,VLDB,R007
+ACM003,Scalable Ontology Alignment Using Neural Embeddings,2023,WWW,R003
+ACM003,Scalable Ontology Alignment Using Neural Embeddings,2023,WWW,R011
+ACM004,Knowledge Graph Completion with Path-Based Reasoning,2022,KDD,R005
+ACM004,Knowledge Graph Completion with Path-Based Reasoning,2022,KDD,R009
+ACM005,Efficient SPARQL Query Optimisation via Cost Models,2021,SIGMOD,R001
+ACM005,Efficient SPARQL Query Optimisation via Cost Models,2021,SIGMOD,R014
+ACM006,Schema Matching at Scale: A Comparative Survey,2023,VLDB,R008
+ACM006,Schema Matching at Scale: A Comparative Survey,2023,VLDB,R012
+ACM007,Property Graph Query Languages: A Formal Comparison,2022,PODS,R002
+ACM007,Property Graph Query Languages: A Formal Comparison,2022,PODS,R004
+ACM008,Deep Learning for Multi-Source Entity Resolution,2021,KDD,R005
+ACM008,Deep Learning for Multi-Source Entity Resolution,2021,KDD,R013
+ACM009,Declarative Data Integration with Denial Constraints,2024,SIGMOD,R001
+ACM009,Declarative Data Integration with Denial Constraints,2024,SIGMOD,R003
+ACM010,Towards Explainable Knowledge Graph Embeddings,2023,ISWC,R006
+ACM010,Towards Explainable Knowledge Graph Embeddings,2023,ISWC,R015
+ACM011,Stream Processing over Linked Data Streams,2020,ESWC,R007
+ACM011,Stream Processing over Linked Data Streams,2020,ESWC,R004
+ACM012,Constraint-Driven Data Quality Assessment in Data Lakes,2024,VLDB,R008
+ACM012,Constraint-Driven Data Quality Assessment in Data Lakes,2024,VLDB,R010
+ACM013,Multi-Source Entity Matching with Graph Neural Networks,2023,WWW,R005
+ACM013,Multi-Source Entity Matching with Graph Neural Networks,2023,WWW,R013
+ACM014,Temporal Knowledge Graphs: Modelling and Querying,2022,SIGMOD,R009
+ACM014,Temporal Knowledge Graphs: Modelling and Querying,2022,SIGMOD,R015
+ACM015,Global-as-View Mediation for Semantic Data Sources,2021,ISWC,R001
+ACM015,Global-as-View Mediation for Semantic Data Sources,2021,ISWC,R017
+ACM016,Automatic Wrapper Generation for Semi-Structured Sources,2020,VLDB,R020
+ACM016,Automatic Wrapper Generation for Semi-Structured Sources,2020,VLDB,R002
+ACM017,Query Rewriting under Schema Mappings,2023,PODS,R008
+ACM017,Query Rewriting under Schema Mappings,2023,PODS,R019
+ACM018,Approximate Entity Matching with Probabilistic Models,2022,SIGMOD,R005
+ACM018,Approximate Entity Matching with Probabilistic Models,2022,SIGMOD,R016
+ACM019,Linked Data Integration via Minimal Repairs,2024,ISWC,R003
+ACM019,Linked Data Integration via Minimal Repairs,2024,ISWC,R018
+ACM020,Knowledge Base Construction from Web Tables,2021,WWW,R020
+ACM020,Knowledge Base Construction from Web Tables,2021,WWW,R009

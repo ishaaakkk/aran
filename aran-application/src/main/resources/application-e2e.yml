@@ -1,0 +1,91 @@
+# ===========================================================================
+#  E2E profile (SPRING_PROFILES_ACTIVE=e2e)
+#
+#  Used only by the Playwright suite. Every port is offset from dev so the
+#  suite can run beside a live `make all` stack.
+#
+#  Flyway deliberately loads db/seed-e2e and NOT db/seed: both hold a V4, and
+#  the e2e seed provisions one tenant per spec instead of the single demo one.
+# ===========================================================================
+server:
+  port: 8181
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:55432/aran
+    username: aran
+    password: aran
+    hikari:
+      # The default profile sets 1500ms deliberately, to fail fast rather than hang
+      # Tomcat threads when the database is offline. On a laptop running the whole
+      # stack plus four browser workers that is too tight: opening a connection can
+      # genuinely take longer than 1.5s under load, and the request then surfaces as
+      # "An internal server error occurred." to the user rather than waiting.
+      # Observed on project creation during the seven-source scenario, with the pool
+      # reporting total=0 — no connection available and none obtainable in time.
+      # Raised HERE ONLY; production keeps its fail-fast behaviour.
+      connection-timeout: 20000
+      validation-timeout: 5000
+
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/seed-e2e
+
+  # A test backend must never hot-restart. DevTools is on the classpath and its
+  # restart is enabled by default, so anything written into a watched directory
+  # restarts the server mid-run and silently discards every in-flight request.
+  # Observed exactly that: two PIDs and 128 restart events within a single suite
+  # run, with a promotion that was clicked but never reached the backend at all.
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/aran-e2e
+          jwk-set-uri: http://localhost:8180/realms/aran-e2e/protocol/openid-connect/certs
+      client:
+        provider:
+          keycloak:
+            authorization-uri: http://localhost:8180/realms/aran-e2e/protocol/openid-connect/auth
+            token-uri: http://localhost:8180/realms/aran-e2e/protocol/openid-connect/token
+            jwk-set-uri: http://localhost:8180/realms/aran-e2e/protocol/openid-connect/certs
+            user-info-uri: http://localhost:8180/realms/aran-e2e/protocol/openid-connect/userinfo
+
+management:
+  server:
+    port: 8182
+
+aran:
+  security:
+    # The suite runs the published dev credentials against throwaway containers.
+    # Declared here rather than inferred from the profile name — F3 records what
+    # happens when a guard tests SPRING_PROFILES_ACTIVE for "dev"/"test": "e2e"
+    # contains neither, and this profile had to work around it.
+    allow-insecure-defaults: true
+  identity:
+    keycloak:
+      base-url: http://localhost:8180
+      realm: aran-e2e
+  lake:
+    url: http://localhost:8185
+  freyja:
+    url: http://localhost:8186
+  fuseki:
+    base-url: http://localhost:3130
+  licensing:
+    mode: database
+  jdbc:
+    # Deliberately NOT under build/. DevTools watches the classpath, and the
+    # first federated repository to download a JDBC driver into a watched
+    # directory triggers a restart — which is how the restarts above began.
+    driver-cache-dir: /tmp/aran-e2e-drivers
+
+logging:
+  level:
+    edu.upc.dtak.aran: DEBUG

@@ -1,0 +1,104 @@
+### ============================================================
+###  Integration Model API — /api/projects/{projectId}/model/**
+###  The durable, project-owned integration model (V16): sources,
+###  alignments (mappings), constraints, and compile → DRAFT.
+###  Run auth.http first to populate {{access_token}}.
+### ============================================================
+
+### Fill these in from your dev data (see projects.http / datasets):
+@projectId = replace-with-a-project-id
+@leftDatasetId = replace-with-a-bootstrapped-dataset-id
+@rightDatasetId = replace-with-another-bootstrapped-dataset-id
+@thirdDatasetId = replace-with-a-third-bootstrapped-dataset-id
+
+### getOrCreate: the model is created empty on first GET, then returns the full bundle.
+GET {{baseUrl}}/api/projects/{{projectId}}/model
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Enrol the three demo datasets as sources (seeds one model_source per class, with wrappers).
+POST {{baseUrl}}/api/projects/{{projectId}}/model/sources
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{ "datasetId": "{{leftDatasetId}}" }
+
+###
+POST {{baseUrl}}/api/projects/{{projectId}}/model/sources
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{ "datasetId": "{{rightDatasetId}}" }
+
+###
+POST {{baseUrl}}/api/projects/{{projectId}}/model/sources
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{ "datasetId": "{{thirdDatasetId}}" }
+
+### Suggest alignments for one pair → rows persist as SUGGESTED with scores in `evidence`.
+POST {{baseUrl}}/api/projects/{{projectId}}/model/suggest
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{ "leftDatasetId": "{{leftDatasetId}}", "rightDatasetId": "{{rightDatasetId}}" }
+
+### Accept one suggestion (copy a mapping id from the GET / suggest response into {{mappingId}}).
+@mappingId = replace-with-a-suggested-mapping-id
+PATCH {{baseUrl}}/api/projects/{{projectId}}/model/mappings/{{mappingId}}
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{ "status": "ACCEPTED" }
+
+### Add a manual mapping (created ACCEPTED). kind ∈ class | datatype | object | join.
+### For a join, label carries the packed "label|relationship|direction" form.
+POST {{baseUrl}}/api/projects/{{projectId}}/model/mappings
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "kind": "class",
+  "sourceIri": "http://example.org/left/Paper",
+  "targetIri": "http://example.org/right/Article",
+  "label": "Paper"
+}
+
+### Edit a class wrapper (classIri rides in the body so IRIs with slashes survive).
+PUT {{baseUrl}}/api/projects/{{projectId}}/model/sources/{{leftDatasetId}}/wrappers
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{ "classIri": "http://example.org/left/Paper", "sql": "SELECT * FROM ${SNAPSHOT}" }
+
+### Add a constraint (unenforced by default), then enforce it.
+POST {{baseUrl}}/api/projects/{{projectId}}/model/constraints
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{ "classIri": "http://example.org/right/Researcher", "expression": "h_index >= 0" }
+
+### @constraintId = replace-with-a-constraint-id
+# PATCH {{baseUrl}}/api/projects/{{projectId}}/model/constraints/{{constraintId}}
+# Authorization: Bearer {{access_token}}
+# Content-Type: application/json
+#
+# { "enforced": true }
+
+### Compile the whole model → 202 with a jobId. Poll GET /api/jobs/{id} until SUCCEEDED;
+### its `result` carries draftVersionId and unusedAlignments.
+POST {{baseUrl}}/api/projects/{{projectId}}/model/compile
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Poll the compile job (copy the jobId from the 202 above).
+@compileJobId = replace-with-the-jobId-from-compile
+GET {{baseUrl}}/api/jobs/{{compileJobId}}
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Durability proof: after a server restart, the full bundle is still here.
+GET {{baseUrl}}/api/projects/{{projectId}}/model
+Authorization: Bearer {{access_token}}
+Accept: application/json

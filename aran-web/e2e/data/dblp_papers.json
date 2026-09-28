@@ -1,0 +1,9 @@
+[
+  {
+    "id": "DBLP-001",
+    "title": "Cost-Based Optimization for Federated Plans",
+    "year": 2023,
+    "author_ref": "R-006",
+    "conference": { "code": "V-02", "title": "SIGMOD" }
+  }
+]

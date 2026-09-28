@@ -1,0 +1,230 @@
+---
+title: 'Architecture'
+sidebar_label: 'Architecture'
+sidebar_position: 3
+description: 'The hexagonal core, the dependency rules, and C4 context and container diagrams of the running system.'
+# Diátaxis mode: explanation
+---
+
+Aran is one JVM application, two Python services, a browser client, and four
+stores. This page describes how they divide the work. It also explains why
+the JVM application itself splits into modules that cannot see each other.
+
+## System context
+
+Everything outside the dashed boundary is something Aran talks to, but does
+not own. Keycloak is the identity provider. The source systems are the
+customer's databases and buckets. The stores run alongside Aran, but they are
+ordinary off-the-shelf servers.
+
+```mermaid
+flowchart TB
+  accTitle: Aran system context
+  accDescr: A data engineer uses Aran, which validates tokens against Keycloak, reads from source systems over JDBC and HTTP, and reads and writes both a PostgreSQL database and an Apache Jena Fuseki RDF store.
+  ENG(["<b>Data engineer</b><br/><i>person</i><br/>Registers sources, declares how<br/>their schemas relate, queries the result"])
+
+  subgraph SYS[" "]
+    Aran["<b>Aran</b><br/><i>software system</i><br/>Derives a schema per source, integrates<br/>those schemas, answers queries across them"]
+  end
+
+  KC["<b>Keycloak</b><br/><i>external system</i><br/>OIDC provider. Authenticates<br/>callers; tenancy is Aran's own"]
+  SRC["<b>Source systems</b><br/><i>external systems</i><br/>Relational databases, object stores,<br/>Iceberg catalogs, SaaS APIs"]
+  PG[("<b>PostgreSQL</b><br/><i>external datastore</i><br/>Tenants, projects, repositories,<br/>datasets, jobs, licences")]
+  FUS[("<b>Apache Jena Fuseki</b><br/><i>external datastore</i><br/>The RDF schema graph<br/>and its versions")]
+
+  ENG -- "uses<br/>HTTPS" --> Aran
+  Aran -- "validates tokens against<br/>OIDC" --> KC
+  Aran -- "reads data from<br/>JDBC · HTTP" --> SRC
+  Aran -- "reads and writes<br/>JDBC" --> PG
+  Aran -- "reads and writes<br/>SPARQL over HTTP" --> FUS
+
+  classDef person fill:#4c1d95,stroke:#2e1065,color:#ffffff
+  classDef system fill:#7c3aed,stroke:#5b21b6,color:#ffffff
+  classDef ext fill:#e8e5dc,stroke:#a8a296,color:#15151b
+  class ENG person
+  class Aran system
+  class KC,SRC,PG,FUS ext
+  style SYS fill:transparent,stroke:#a8a296,stroke-dasharray:5 5
+```
+
+## Containers
+
+Four things run: `aran-application` is the JVM process. `aran-lake` and
+`freyja` are separate Python services. `aran-web` is a browser client. The
+Gradle modules shown inside the application boundary compile into that one
+process. This page draws them here, because the compiler enforces the
+boundaries between them. Those boundaries are the most consequential
+structure in the codebase. The arrows between the modules appear in
+[the next diagram](#the-hexagonal-boundary), not this one, which shows
+runtime traffic only.
+
+```mermaid
+flowchart TB
+  accTitle: Aran containers
+  accDescr: A data engineer uses aran-web, which calls aran-application over REST and authenticates against Keycloak. Inside the single JVM process sit aran-application, aran-operators, aran-core and aran-adapters. The adapters reach PostgreSQL, Fuseki and aran-lake; the operators reach freyja. aran-lake in turn reaches its own PostgreSQL and a Garage S3 store.
+  ENG(["<b>Data engineer</b>"])
+  KC["<b>Keycloak</b><br/><i>external · OIDC</i>"]
+
+  WEB["<b>aran-web</b><br/><i>React 19 · Vite · TypeScript</i><br/>The only frontend"]
+
+  subgraph JVM["aran-application — one JVM process"]
+    direction TB
+    APPMOD["<b>aran-application</b><br/><i>Spring Boot 4</i><br/>HTTP · security · tenant resolution · jobs"]
+    OPS["<b>aran-operators/*</b><br/><i>Spring components</i><br/>bootstrapping · profiling · join-discovery<br/>schema-integration · constraint-discovery · query-engine"]
+    CORE["<b>aran-core</b><br/><i>Java 25</i><br/>Domain records · ports · Operator contract"]
+    ADP["<b>aran-adapters/*</b><br/><i>Spring components</i><br/>JPA · Fuseki · lake client · signed-token licence"]
+  end
+
+  LAKE["<b>aran-lake</b><br/><i>FastAPI · DuckDB · Arrow</i><br/>Snapshots · imports · materialisation"]
+  FRJ["<b>freyja</b><br/><i>FastAPI · scikit-learn</i><br/>Column profiling · join candidates"]
+
+  PG[("<b>PostgreSQL</b><br/><i>platform database</i>")]
+  FUS[("<b>Fuseki</b><br/><i>RDF store</i>")]
+  LPG[("<b>PostgreSQL</b><br/><i>lake database</i>")]
+  S3[("<b>Garage</b><br/><i>S3-compatible store</i>")]
+
+  ENG -- "HTTPS" --> WEB
+  WEB -- "REST + SSE" --> APPMOD
+  WEB -- "authenticates<br/>OIDC" --> KC
+  APPMOD -- "validates JWTs<br/>JWKS" --> KC
+
+  ADP -- "JPA + Flyway" --> PG
+  ADP -- "SPARQL/HTTP" --> FUS
+  ADP -- "HTTP" --> LAKE
+  OPS -- "HTTP" --> FRJ
+  LAKE -- "asyncpg" --> LPG
+  LAKE -- "S3" --> S3
+
+  classDef person fill:#4c1d95,stroke:#2e1065,color:#ffffff
+  classDef container fill:#7c3aed,stroke:#5b21b6,color:#ffffff
+  classDef module fill:#a78bfa,stroke:#5b21b6,color:#1e1b4b
+  classDef store fill:#4b4b57,stroke:#33333d,color:#ffffff
+  classDef ext fill:#e8e5dc,stroke:#a8a296,color:#15151b
+  class ENG person
+  class WEB,LAKE,FRJ container
+  class APPMOD,OPS,CORE,ADP module
+  class PG,FUS,LPG,S3 store
+  class KC ext
+  style JVM fill:transparent,stroke:#a8a296,stroke-dasharray:5 5
+```
+
+### What each one is responsible for
+
+| Container | Port | Owns |
+| --- | --- | --- |
+| `aran-web` | 5173 (dev) | The entire user interface. There is no second frontend. |
+| `aran-application` | 8081 | HTTP surface, authentication, tenant resolution, jobs, and every operator. |
+| `aran-lake` | 8085 | Snapshots, imports, materialisation, and the object storage behind them. Has its own database and its own alembic migrations. |
+| `freyja` | 8086 | Profiling and join discovery. Stateless. Two operators call it. |
+
+`freyja` deliberately shares the lake's Python virtual environment. That is a
+choice, not an accident. `make freyja-deps` installs its requirements into it.
+
+Two more Python components ship in the repository but run on the user's
+side, not in the platform: `aran-client`, the Python SDK, and `aran-mcp`,
+the MCP sidecar an agent client runs beside itself. Each has its own
+virtual environment, because each installs into an environment Aran does
+not control.
+
+## The hexagonal boundary
+
+The JVM application uses a ports-and-adapters design. The boundary is
+structural, not aspirational. The Gradle build enforces it, by restricting
+what each module is allowed to depend on.
+
+```mermaid
+flowchart TB
+  accTitle: Hexagonal module dependencies
+  accDescr: aran-application, aran-operators and aran-adapters each depend on aran-core at compile time. aran-application additionally loads the operators and adapters at runtime only, so it never compiles against an implementation.
+  subgraph runtime["Loaded at runtime only"]
+    direction LR
+    OPS["aran-operators/*<br/><small>capabilities</small>"]
+    ADP["aran-adapters/*<br/><small>persistence · graph · lake · licence</small>"]
+  end
+
+  APP["aran-application<br/><small>Spring Boot: HTTP, security, wiring</small>"]
+  CORE["aran-core<br/><small>domain records · ports · Operator contract</small>"]
+
+  APP -- "implementation" --> CORE
+  OPS -- "implementation" --> CORE
+  ADP -- "implementation" --> CORE
+  APP -. "runtimeOnly" .-> OPS
+  APP -. "runtimeOnly" .-> ADP
+
+  classDef core fill:#7c3aed22,stroke:#7c3aed,stroke-width:2px
+  classDef plain fill:transparent,stroke:#888
+  class CORE core
+  class APP,OPS,ADP plain
+```
+
+Three rules follow. The build checks each one, not a reviewer.
+
+1. **`aran-core` depends on nobody.** It has no Spring Web and no JPA
+   annotations. Domain types are plain Java records. Anything that needs the
+   outside world becomes a port interface instead — `DatasetRepository`,
+   `GraphStore`, `LakeClient`, `LicenseProvider`, `DriverDownloader`. It does
+   use the Spring context for bean wiring, and it uses Jena, Calcite, and
+   DuckDB for the types those ports carry. But nothing ties it to a transport
+   or a persistence technology.
+
+2. **Adapters and operators depend on the core, never on each other.** Each
+   declares exactly `implementation project(':aran-core')` and its own libraries.
+   An operator cannot call into the persistence adapter, because it cannot see it.
+
+3. **The application depends on adapters and operators at runtime only.** In
+   `aran-application/build.gradle`, every adapter and operator is `runtimeOnly`.
+   The application compiles against the core's ports, never against an
+   implementation. So a controller physically cannot reference a JPA entity or
+   an operator's internals. Adapters register themselves through Spring Boot
+   auto-configuration. Operators register themselves through component
+   scanning.
+
+The last rule is what makes the licensing seam work. Two adapters implement
+`LicenseProvider`, each `@ConditionalOnProperty` on `aran.licensing.mode`. No
+code outside them branches on deployment mode. See
+[Licensing modes](../deep-dives/licensing-modes.md).
+
+The full module table — every Gradle and Python module, what belongs in
+it, and where new code goes — lives in
+[Module layout](../contributing/module-layout.md).
+
+## How a request flows
+
+Every authenticated request follows the same path before it reaches anything
+tenant-scoped.
+
+```mermaid
+sequenceDiagram
+  accTitle: Request path from browser to adapter
+  accDescr: A request carrying a bearer JWT or an API token passes through Spring Security, which validates it, then TenantResolutionFilter, which resolves the tenant from Aran's own membership row (or the token's owner) and binds it as a ScopedValue for the whole chain. The controller and core service then run inside that tenant scope, and the persistence adapter enables the Hibernate tenant filter from the bound context.
+  autonumber
+  participant B as Browser
+  participant SEC as Spring Security
+  participant TRF as TenantResolutionFilter
+  participant C as Controller
+  participant S as Core service
+  participant A as Adapter
+
+  B->>SEC: request + bearer JWT or API token
+  SEC->>SEC: validate signature / token, against Keycloak JWKS or the token store
+  SEC->>TRF: authenticated caller
+  TRF->>TRF: resolve tenant from the membership row (or the token's owner)
+  Note over TRF: ScopedValue bound for the whole chain, torn down automatically on return
+  TRF->>C: proceed inside tenant scope
+  C->>S: call, no tenant argument
+  S->>A: port call
+  A->>A: Hibernate tenantFilter enabled from bound context
+  A-->>B: response
+```
+
+The tenant is never a method parameter on the way in, and never a request
+header. Code that reaches tenant-scoped logic without passing through the
+filter fails loudly, rather than defaulting to something.
+[Multi-tenancy](../deep-dives/multi-tenancy.md) covers what that buys and
+where the filter does not apply.
+
+## Where to go next
+
+- [The query pipeline](../deep-dives/query-pipeline.mdx) — OQL to DuckDB SQL, stage by stage.
+- [Bootstrapping and the schema graph](../deep-dives/bootstrapping-and-the-schema-graph.mdx) — how a raw file becomes RDF.
+- [Module layout](../contributing/module-layout.md) — the same boundaries, from a contributor's point of view.

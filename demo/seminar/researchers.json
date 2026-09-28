@@ -1,0 +1,22 @@
+[
+  {"researcher_id": "R001", "full_name": "Maria Garcia",      "affiliation": "UPC",                  "country": "Spain",        "h_index": 18, "email": "m.garcia@upc.edu"},
+  {"researcher_id": "R002", "full_name": "James Chen",        "affiliation": "MIT",                  "country": "USA",          "h_index": 24, "email": "j.chen@mit.edu"},
+  {"researcher_id": "R003", "full_name": "Ana Silva",         "affiliation": "INESC",                "country": "Portugal",     "h_index": 12, "email": "a.silva@inesc.pt"},
+  {"researcher_id": "R004", "full_name": "Luca Rossi",        "affiliation": "Politecnico di Milano","country": "Italy",        "h_index":  9, "email": "l.rossi@polimi.it"},
+  {"researcher_id": "R005", "full_name": "David Kim",         "affiliation": "CMU",                  "country": "USA",          "h_index": 21, "email": "d.kim@cmu.edu"},
+  {"researcher_id": "R006", "full_name": "Sophie Weber",      "affiliation": "ETH Zurich",           "country": "Switzerland",  "h_index": 15, "email": "s.weber@ethz.ch"},
+  {"researcher_id": "R007", "full_name": "Carlos Ruiz",       "affiliation": "UPC",                  "country": "Spain",        "h_index":  7, "email": "c.ruiz@upc.edu"},
+  {"researcher_id": "R008", "full_name": "Emma Wilson",       "affiliation": "Oxford",               "country": "UK",           "h_index": 19, "email": "e.wilson@ox.ac.uk"},
+  {"researcher_id": "R009", "full_name": "Hiroshi Tanaka",    "affiliation": "University of Tokyo",  "country": "Japan",        "h_index": 11, "email": "h.tanaka@u-tokyo.ac.jp"},
+  {"researcher_id": "R010", "full_name": "Fatima Al-Hassan",  "affiliation": "KAUST",                "country": "Saudi Arabia", "h_index":  8, "email": "f.alhassan@kaust.edu.sa"},
+  {"researcher_id": "R011", "full_name": "Pedro Martins",     "affiliation": "INESC",                "country": "Portugal",     "h_index":  5, "email": "p.martins@inesc.pt"},
+  {"researcher_id": "R012", "full_name": "Claire Dupont",     "affiliation": "INRIA",                "country": "France",       "h_index": 13, "email": "c.dupont@inria.fr"},
+  {"researcher_id": "R013", "full_name": "Raj Patel",         "affiliation": "IIT Bombay",           "country": "India",        "h_index":  6, "email": "r.patel@iitb.ac.in"},
+  {"researcher_id": "R014", "full_name": "Lars Eriksson",     "affiliation": "KTH",                  "country": "Sweden",       "h_index": 10, "email": "l.eriksson@kth.se"},
+  {"researcher_id": "R015", "full_name": "Yuki Nakamura",     "affiliation": "NII",                  "country": "Japan",        "h_index": 14, "email": "y.nakamura@nii.ac.jp"},
+  {"researcher_id": "R016", "full_name": "Priya Sharma",      "affiliation": "IIT Bombay",           "country": "India",        "h_index":  4, "email": "p.sharma@iitb.ac.in"},
+  {"researcher_id": "R017", "full_name": "Thomas Müller",     "affiliation": "ETH Zurich",           "country": "Switzerland",  "h_index": 16, "email": "t.muller@ethz.ch"},
+  {"researcher_id": "R018", "full_name": "Isabela Fonseca",   "affiliation": "INESC",                "country": "Portugal",     "h_index":  3, "email": "i.fonseca@inesc.pt"},
+  {"researcher_id": "R019", "full_name": "Alex Turner",       "affiliation": "Oxford",               "country": "UK",           "h_index": 11, "email": "a.turner@ox.ac.uk"},
+  {"researcher_id": "R020", "full_name": "Mei Liu",           "affiliation": "Tsinghua University",  "country": "China",        "h_index": 17, "email": "m.liu@tsinghua.edu.cn"}
+]

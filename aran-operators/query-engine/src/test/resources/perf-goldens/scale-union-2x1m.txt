@@ -1,0 +1,6 @@
+PROJECT[key]
+  UNION[all=true, inputs=2]
+    FILTER[=(grp, 'g1')]
+      SCAN[u_c0s0_C0]
+    FILTER[=(grp, 'g1')]
+      SCAN[u_c0s1_C0]

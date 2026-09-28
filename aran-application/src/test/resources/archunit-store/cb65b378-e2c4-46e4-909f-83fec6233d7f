@@ -1,0 +1,4 @@
+Method <edu.upc.dtak.aran.adapter.persistence.HttpJdbcDriverDownloader.unloadDriver(java.lang.String)> calls method <java.sql.DriverManager.deregisterDriver(java.sql.Driver)> in (HttpJdbcDriverDownloader.java:166)
+Method <edu.upc.dtak.aran.adapter.persistence.HttpJdbcDriverDownloader.unloadDriver(java.lang.String)> calls method <java.sql.DriverManager.deregisterDriver(java.sql.Driver)> in (HttpJdbcDriverDownloader.java:178)
+Method <edu.upc.dtak.aran.adapter.persistence.HttpJdbcDriverDownloader.unloadDriver(java.lang.String)> calls method <java.sql.DriverManager.getDrivers()> in (HttpJdbcDriverDownloader.java:173)
+Method <edu.upc.dtak.aran.core.util.DuckDbSession.open()> calls method <java.sql.DriverManager.getConnection(java.lang.String)> in (DuckDbSession.java:89)

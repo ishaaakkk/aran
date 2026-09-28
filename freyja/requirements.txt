@@ -1,0 +1,43 @@
+# FREYJA sidecar dependencies.
+#
+# freyja is not an installable package: uvicorn imports `freyja.api.profile_api:app`
+# with the repo root on sys.path (see `make freyja-sidecar`). This file is the single
+# source of truth for its third-party deps — do NOT re-add them to aran-lake's
+# pyproject; the sidecar merely shares aran-lake's virtualenv for convenience.
+# Upper bounds are deliberate. Every pin below is `>=x,<next-major` so a new major
+# release cannot land straight into CI and production unreviewed — these ranges are
+# resolved fresh on every install, with no lockfile to hold them still.
+fastapi>=0.115.0,<1.0.0
+uvicorn[standard]>=0.32.0,<1.0.0
+pydantic>=2.9.0,<3.0.0
+httpx>=0.27.0,<1.0.0
+duckdb>=1.1.0,<2.0.0
+pyarrow>=17.0.0,<21.0.0
+pandas>=2.2.0,<3.0.0
+numpy>=2.0.0,<3.0.0
+jellyfish>=1.2.0,<2.0.0
+Levenshtein>=0.25.0,<1.0.0
+# scikit-learn + joblib: the join-discovery model is a joblib-pickled sklearn
+# estimator, so sklearn must be importable at unpickle time.
+#
+# The upper bound matters more here than anywhere else in this file: models/model.pkl
+# is a committed pickle, and scikit-learn does not guarantee unpickling across minor
+# versions — it warns, and across a major it can fail outright. An unbounded range
+# means a routine `pip install` can silently break join discovery at runtime. Raise
+# this bound deliberately, and re-verify the model loads when you do.
+#
+# Pinned to the minor that pickled the model. The previous range (>=1.5.0,<1.8.0) did
+# not need raising for the mismatch to happen — it was inside the range: a fresh
+# install resolved 1.7.2 against a pickle written by 1.6.1, and every bootstrap
+# emitted InconsistentVersionWarning ("may lead to breaking code or invalid results").
+# test_model.py fails if this drifts again. There is no training script in the repo,
+# so matching the pickle is the only option available without one.
+#
+# Raised again to 1.9.0: model.pkl was committed under a newer scikit-learn without this pin following it.
+#
+# Exact, not a range: InconsistentVersionWarning fires on ANY version difference, patch
+# included. A fresh install on 2026-09-23 resolved 1.9.1 inside the >=1.9.0,<1.10.0 range
+# against the 1.9.0 pickle and failed test_model.py — the same drift the range was meant
+# to stop. Bump this line and re-pickle the model together, never one without the other.
+scikit-learn==1.9.0
+joblib>=1.4.0,<2.0.0

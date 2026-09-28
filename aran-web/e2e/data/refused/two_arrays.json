@@ -1,0 +1,4 @@
+[
+  { "id": 1, "title": "Federated Query Processing", "tags": ["federation", "sql"], "keywords": ["duckdb", "calcite"] },
+  { "id": 2, "title": "Schema Integration Revisited", "tags": ["integration"], "keywords": ["gav"] }
+]

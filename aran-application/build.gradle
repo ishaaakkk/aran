@@ -1,0 +1,204 @@
+// ===========================================================================
+//  aran-application
+//  The single deployable Spring Boot 4 application. This is the ONLY module
+//  with the spring-boot plugin applied — it assembles the core, the adapters,
+//  and the Nextia operator modules into a runnable, bootable artifact.
+//
+//  Security model: NO Keycloak adapter / Keycloak-specific library is used.
+//  Keycloak (the server) is treated as a standards-compliant OIDC provider.
+//  Spring Security 7's built-in OAuth2 support does all the work:
+//    * spring-boot-starter-oauth2-resource-server -> validates JWT bearer
+//      tokens for the stateless API filter chain.
+//    * spring-boot-starter-oauth2-client          -> authorization-code login
+//      for the browser/BFF filter chain.
+// ===========================================================================
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    // --- Aran platform ---
+    implementation project(':aran-core')
+
+    // Jena (SourceGraphController, and the tests that stage source graphs) arrives through
+    // aran-core's `api`. This module used to declare its own 5.3.0 compileOnly/test copy while
+    // the bootJar shipped core's 5.2.0; it must not redeclare one.
+
+    // --- Adapters (outbound) ---
+    runtimeOnly project(':aran-adapters:aran-adapter-persistence')
+    // Gap 2: implementation (not runtimeOnly) because the produce-side Iceberg REST catalog
+    // controllers call the adapter's metadata generator by type; the consume-side client bean
+    // still arrives via the adapter's auto-configuration like the persistence adapter's beans.
+    implementation project(':aran-adapters:aran-adapter-iceberg')
+
+    // Self-hosted licensing adapter. Conditional-on-property — present on
+    // the classpath but only active when aran.licensing.mode=signed-token.
+    // In cloud deployments it's inert; drop this line entirely if you
+    // build cloud-only images.
+    runtimeOnly project(':aran-adapters:aran-adapter-license-token')
+
+    // --- Platform Operators ---
+    runtimeOnly project(':aran-operators:bootstrapping')
+    runtimeOnly project(':aran-operators:join-discovery')
+    runtimeOnly project(':aran-operators:profiling')
+    runtimeOnly project(':aran-operators:schema-integration')
+    runtimeOnly project(':aran-operators:constraint-discovery')
+    runtimeOnly project(':aran-operators:query-engine')
+
+    // --- Web / API ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.5'
+
+    // --- JDBC endpoint (Track B) ---
+    // avatica-core only: it carries the protocol (JsonHandler, LocalService, Meta) with no
+    // transport of its own. avatica-server is deliberately NOT here — it brings Jetty, and this
+    // application serves the endpoint from its own Tomcat, on its own port, behind its own
+    // security chain. Same version Calcite 1.41 already resolves for the query engine.
+    implementation 'org.apache.calcite.avatica:avatica-core:1.27.0'
+    // Reads back the parquet that materialize-oql writes, so a JDBC ResultSet can page through a
+    // full result. A parquet reader here, nothing more: no Aran view is built in this connection.
+    implementation "org.duckdb:duckdb_jdbc:${duckdbJdbcVersion}"
+
+    // Rate limiting. Bucket4j is the de-facto standard for token-bucket
+    // rate limiting in Spring Boot. The in-memory backend is sufficient for
+    // a single-node deployment; swap for the Redis/Hazelcast backend if you
+    // need rate limits shared across multiple nodes.
+    implementation 'com.bucket4j:bucket4j-core:8.10.1'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
+    // --- Security: pure Spring Security 7 OAuth2, no Keycloak libs ---
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // --- Observability: Spring Boot 4's first-class OpenTelemetry starter.
+    //     Pairs with Keycloak's own OTel export for one unified pipeline.
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
+
+    // DevTools: hot-reload on file save in dev mode. `developmentOnly` means
+    // it is excluded from the production bootJar automatically.
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:4.0.6'
+
+    // --- Persistence (JPA / Hibernate 7). The concrete adapter lives in
+    //     aran-adapter-persistence; the starter is here so the app owns the
+    //     datasource + JPA autoconfiguration.
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // --- Dev / test ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    //testImplementation 'org.testcontainers:postgresql'
+    //testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql:1.21.4'
+    testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
+    // ArchitectureTest. Here rather than in aran-core because this is the one module whose test
+    // classpath holds every other module — the operators and adapters arrive runtimeOnly — so
+    // it is the only place a rule about how modules depend on each other can see both ends.
+    testImplementation('com.tngtech.archunit:archunit:1.5.0') {
+        // It asks for slf4j-api 2.0.18, a patch above the Boot BOM's; conflict resolution would
+        // move this module's whole test classpath off the version the bootJar ships.
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
+
+    // The operator modules are runtimeOnly above, which is all the running app needs (they
+    // register themselves as beans). The cross-operator end-to-end test drives them directly —
+    // bootstrap bytes, integrate the graphs, build the catalog, run OQL on DuckDB — so it needs
+    // them at test-compile time. This module already composes all of them, so no new dependency
+    // edge between operator modules is introduced.
+    testImplementation project(':aran-operators:bootstrapping')
+    testImplementation project(':aran-operators:schema-integration')
+    testImplementation project(':aran-operators:query-engine')
+    testImplementation "org.duckdb:duckdb_jdbc:${duckdbJdbcVersion}"
+    // PlanExecutor hands back Calcite RelNodes; the test names that type to drive the
+    // planner the way QueryEngineOperator does.
+    testImplementation 'org.apache.calcite:calcite-core:1.41.0'
+    // The live Iceberg ITs play the OTHER side of both protocols with the reference client —
+    // RESTCatalog writing tables into a real catalog (consume), RESTCatalog reading Aran's own
+    // (produce). Test-only: main code still reaches iceberg-core solely through the adapter.
+    testImplementation "org.apache.iceberg:iceberg-core:${icebergVersion}"
+    testImplementation "org.apache.iceberg:iceberg-api:${icebergVersion}"
+}
+
+// The dev/e2e Flyway seeds are excluded from aran-adapter-persistence's jar so they cannot ride
+// into a production artifact (MIGRATIONS-8 — see that module's build.gradle). A Gradle-launched
+// stack resolves that module through the jar, so bootRun and the dev-profile integration tests
+// pick the seeds up from a staged, seeds-only classpath root instead.
+def seedClasspath = project(':aran-adapters:aran-adapter-persistence')
+        .layout.buildDirectory.dir('seed-classpath')
+
+tasks.named('bootRun') {
+    dependsOn ':aran-adapters:aran-adapter-persistence:seedClasspath'
+    classpath += files(seedClasspath)
+}
+
+test {
+    dependsOn ':aran-adapters:aran-adapter-persistence:seedClasspath'
+    classpath += files(seedClasspath)
+    useJUnitPlatform {
+        // `-PexcludeTags=docker` drops the Testcontainers-backed integration tests, which is
+        // what validate.sh --offline uses to run this module's remaining tests without a
+        // Docker daemon. Unset in a normal build, so CI still runs everything.
+        if (project.hasProperty('excludeTags')) {
+            excludeTags project.property('excludeTags').split(',')
+        }
+    }
+    // Declare the OpenAPI JSON as an output so Gradle's build cache knows about it
+    outputs.file(layout.buildDirectory.file("openapi.json"))
+    // PublishedImagesTest reads these; declared so an edit to one reruns it instead of leaving
+    // the task UP-TO-DATE on a result about the old text.
+    inputs.files(rootProject.files('build.gradle', 'compose.standalone.yml', '.github/workflows/ci.yml'))
+            .withPropertyName('publishedImageFacts')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    // ProductImageRuntimeUserTest builds the Dockerfile's runtime stage.
+    inputs.file(rootProject.file('Dockerfile'))
+            .withPropertyName('productDockerfile')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    // ArchUnit reads `archunit.<key>` system properties over archunit.properties. Forwarded so
+    // ArchitectureTest's deliberate re-freeze is one command line rather than an edit to the
+    // committed properties file that then has to be remembered and reverted.
+    providers.systemPropertiesPrefixedBy('archunit.').get().each { k, v -> systemProperty(k, v) }
+    // WalkthroughEndToEndTest performs the docs walkthrough over the seminar fixtures, so an edit
+    // to either the page or a fixture alone must rerun it.
+    inputs.dir(rootProject.file('demo/seminar'))
+            .withPropertyName('seminarFixtures')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.file('docs-site/docs/getting-started/walkthrough.md'))
+            .withPropertyName('walkthroughPage')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+/**
+ * Write build-info.properties into the jar so `/actuator/info` — and the admin System
+ * section that reads it — can name the version, the commit and the build time.
+ *
+ * Without this the endpoint is empty, and every bug report starts with a round trip asking
+ * which version the operator is running. `time` is excluded deliberately: a timestamp that
+ * changes on every build makes the jar non-reproducible and busts the Docker layer cache on
+ * a rebuild that changed nothing.
+ */
+springBoot {
+    buildInfo {
+        excludes = ['time']
+        properties {
+            // GIT_COMMIT first: inside the Docker builder stage there is no git binary and
+            // no .git directory, and providers.exec fails the whole build when the process
+            // cannot START — getOrElse only covers an absent value, not an unstartable
+            // command. The Dockerfile passes the commit as a build arg instead; a plain
+            // checkout with git keeps the exec path.
+            additional = [
+                'commit': providers.environmentVariable('GIT_COMMIT')
+                        .orElse(providers.exec {
+                            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+                        }.standardOutput.asText.map { it.trim() })
+                        .getOrElse('unknown')
+            ]
+        }
+    }
+}

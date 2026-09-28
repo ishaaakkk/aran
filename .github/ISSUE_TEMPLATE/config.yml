@@ -1,0 +1,12 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/dtak-upc/aran/security/advisories/new
+    about: >-
+      Do NOT open a public issue for a security problem. Report it privately here,
+      or by email per SECURITY.md.
+  - name: Question or idea
+    url: https://github.com/dtak-upc/aran/discussions
+    about: >-
+      For "how do I…", "should Aran…", or anything you are not yet sure is a bug.
+      Discussions are a better place to work that out than an issue.

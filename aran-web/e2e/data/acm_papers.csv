@@ -1,0 +1,11 @@
+paper_id,title,year,venue_code,author_ref,reviewer_ref
+P-001,Federated Query Processing,2022,V-01,R-001,X-101
+P-002,Schema Integration Revisited,2021,V-02,R-002,X-102
+P-003,Wrappers and Denial Constraints,2023,V-01,R-003,R-001
+P-004,Provenance-Aware Query Rewriting,2020,V-02,R-001,R-002
+P-005,Approximate Join Cardinality Estimation,2019,V-03,R-002,X-103
+P-006,Incremental View Maintenance at Scale,2021,V-01,R-003,X-104
+P-007,Denial Constraints for Data Cleaning Pipelines,2022,V-02,R-001,X-105
+P-008,Cost Models for Federated Wrappers,2018,V-03,R-002,X-106
+P-009,Streaming Schema Matching at Scale,2023,V-01,R-003,X-107
+P-010,Benchmarking Join Discovery Algorithms,2020,V-02,R-001,X-108

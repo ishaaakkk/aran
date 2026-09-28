@@ -1,0 +1,8 @@
+# The image runs the service; its tests run in validate.sh against the source tree.
+tests/
+Dockerfile
+.dockerignore
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.ruff_cache/

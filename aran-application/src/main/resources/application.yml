@@ -1,0 +1,520 @@
+# ===========================================================================
+#  Aran — application configuration
+#  Stack: Java 25 · Spring Boot 4.0.6 · Spring Framework 7
+# ===========================================================================
+server:
+  # 8081 keeps the API off Keycloak's port 8080. The Vue dev server (5173)
+  # proxies /api here; in production the API and SPA should sit behind a
+  # shared gateway so origins match.
+  port: 8081
+
+spring:
+  application:
+    name: aran
+
+  # --- Multipart file upload size limits ---
+  # The whole file is buffered through aran-app on its way to the lake; chunked
+  # (resumable, browser-to-S3) upload is future work, so this cap is the real limit.
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+
+  # --- Threading: virtual threads for request handling (Java 25 + Boot 4) ---
+  # One of the main reasons for the Java 25 baseline. Request handling, the
+  # plugin orchestrator, and JDBC calls all run on virtual threads.
+  threads:
+    virtual:
+      enabled: true
+
+  # --- Persistence ---
+  # Shared-schema multi-tenancy: a single database, tenant discrimination via
+  # a column. The Hibernate-level tenant filter is wired in the persistence
+  # adapter, not here.
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aran
+    username: ${ARAN_DB_USER:aran}
+    password: ${ARAN_DB_PASSWORD:aran}
+    hikari:
+      # `connection-timeout` was 1500 ms, to "fail quickly if the DB is offline and prevent a
+      # Tomcat thread hang". That reads the wrong knob. This timeout bounds how long a caller
+      # waits to be *handed a pooled connection*, which under load is mostly queueing time, not
+      # reachability — so a busy database and an absent one failed identically, after 1.5 s, as
+      # "An internal server error occurred." That is F19, observed for real on project creation
+      # with the pool reporting total=0.
+      #
+      # It is also the wrong shape for this application: requests are served on virtual threads
+      # capped at 256 (ThreadConfig), in front of a pool whose Hikari default is 10. The pool is
+      # the only backpressure in the system, so its timeout has to tolerate a queue rather than
+      # treat one as an outage. Startup-time reachability is `initialization-fail-timeout`'s job,
+      # and Hikari fails fast there by default.
+      connection-timeout: ${ARAN_DB_CONNECTION_TIMEOUT_MS:10000}
+      validation-timeout: 3000     # must stay below connection-timeout — Hikari enforces this
+      # Explicit rather than inheriting the default 10: with a 256-way front end, the pool size
+      # is a capacity decision and should be visible and tunable, not implied.
+      maximum-pool-size: ${ARAN_DB_POOL_SIZE:20}
+  jpa:
+    hibernate:
+      ddl-auto: validate          # schema is owned by migrations, never by Hibernate
+    open-in-view: false           # explicit: no lazy loading in the web layer
+    properties:
+      hibernate:
+        format_sql: true
+
+  # --- Security: Keycloak as a standards-compliant OIDC provider ---
+  # NOTE: no Keycloak library is on the classpath. These are plain Spring
+  # Security OAuth2 properties; "keycloak" appears only in URLs.
+  security:
+    oauth2:
+      # Resource server — validates JWT bearer tokens on the /api/** chain.
+      resourceserver:
+        jwt:
+          issuer-uri: ${ARAN_OIDC_ISSUER:http://localhost:8080/realms/aran}
+          jwk-set-uri: ${ARAN_OIDC_JWK_SET_URI:http://localhost:8080/realms/aran/protocol/openid-connect/certs}
+          # Explicitly reject everything except RS256; prevents alg:none and HS* attacks.
+          jws-algorithms: RS256
+      # Client — authorization-code login for the browser/BFF chain.
+      client:
+        registration:
+          keycloak:
+            client-id: ${ARAN_OIDC_CLIENT_ID:aran-web}
+            client-secret: ${ARAN_OIDC_CLIENT_SECRET:change-me}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile
+              - email
+        provider:
+          keycloak:
+            # We configure explicit endpoints instead of issuer-uri to prevent
+            # blocking OIDC discovery pings at context startup.
+            authorization-uri: ${ARAN_OIDC_AUTH_URI:http://localhost:8080/realms/aran/protocol/openid-connect/auth}
+            token-uri: ${ARAN_OIDC_TOKEN_URI:http://localhost:8080/realms/aran/protocol/openid-connect/token}
+            jwk-set-uri: ${ARAN_OIDC_JWK_SET_URI:http://localhost:8080/realms/aran/protocol/openid-connect/certs}
+            user-info-uri: ${ARAN_OIDC_USER_INFO_URI:http://localhost:8080/realms/aran/protocol/openid-connect/userinfo}
+            user-name-attribute: sub
+
+# --- Observability: Spring Boot 4's first-class OpenTelemetry support ---
+# Exports traces/metrics over OTLP. Point this at the same collector Keycloak
+# exports to for a single unified observability pipeline.
+management:
+  # Expose management endpoints on a dedicated internal port (default 8082).
+  # This port is NOT mapped to the host in docker-compose so it is only
+  # reachable from inside the container (Docker healthchecks) or from within
+  # the Docker network (sidecar monitoring). The main API port (8081) no longer
+  # serves any /actuator/** paths.
+  server:
+    port: ${ARAN_MANAGEMENT_PORT:8082}
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      # Show each component's detail to anyone who can reach the management port. That port is
+      # internal-only (see above), and the System admin screen reads these through Aran's own
+      # owner-gated endpoint rather than by exposing actuator to a browser.
+      show-details: always
+  health:
+    # Availability state, so the liveness/readiness probes have something to report. The four
+    # external-component indicators (ComponentHealthIndicators) are deliberately NOT added to
+    # either group: an unreachable freyja means profiling is unavailable, not that this process
+    # should be restarted, and putting it in the liveness group would turn a degraded sidecar into
+    # a crash loop of the whole application.
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  otlp:
+    metrics:
+      export:
+        enabled: ${ARAN_OTLP_ENABLED:false}
+        url: ${ARAN_OTLP_ENDPOINT:http://localhost:4318/v1/metrics}
+    tracing:
+      endpoint: ${ARAN_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+  tracing:
+    enabled: ${ARAN_TRACING_ENABLED:false}
+    sampling:
+      probability: ${ARAN_TRACING_SAMPLE_RATE:0.1}   # 10 % by default; set to 1.0 in dev
+
+# --- Aran platform / plugin configuration ---
+# Per-plugin config is namespaced under aran.plugins.<id>.* — see
+# PluginContextFactory. Plugins can only read their own namespace.
+aran:
+  security:
+    trusted-proxies: ${ARAN_TRUSTED_PROXIES:127\.0\.0\.1|::1|0:0:0:0:0:0:0:1}
+
+    # InsecureDefaultsGuard refuses to start while any "⚠ DEV-ONLY default" setting below (and
+    # ARAN_ENCRYPTION_KEY, which reaches Hibernate's converter as a raw environment variable) is
+    # still at the value published in this repository. The dev, e2e and standalone profiles opt
+    # out with aran.security.allow-insecure-defaults: true and get a startup warning naming each
+    # defaulted credential instead. There is no second, weaker check — the old
+    # aran.security.fail-on-dev-secrets / ProductionSecretsValidator pair was deleted in T4.
+
+    # ⚠ DEV-ONLY default — set ARAN_ALLOWED_ORIGINS to the real SPA origin(s)
+    # (comma-separated) in any deployed environment.
+    allowed-origins: ${ARAN_ALLOWED_ORIGINS:*}
+
+    # --- Outbound target screen for the connection tester ---
+    # POST /api/projects/{id}/repositories/test-connection connects to a host taken
+    # from the request body, so an authenticated user can aim it at anything this
+    # process can reach. OutboundAddressGuard always refuses link-local (the cloud
+    # metadata endpoint at 169.254.169.254), wildcard and multicast addresses — no
+    # data source lives there.
+    #
+    # Loopback and RFC1918 are a policy choice, not a bug: Aran is normally deployed
+    # next to the databases it federates, so 10.x / 172.16.x / 192.168.x targets are
+    # the ordinary case and blocking them would break the product. Set this true for
+    # a HOSTED multi-tenant deployment, where no tenant should be able to probe the
+    # operator's own subnet. Leave false on-prem, and for local development — the dev
+    # stack and the e2e suite both probe loopback.
+    block-private-networks: ${ARAN_BLOCK_PRIVATE_NETWORKS:false}
+
+    # --- Which credentials this deployment accepts, for EVERY client ---
+    # One policy, enforced server-side in AuthPolicyFilter and published at
+    # GET /api/auth/policy. The Python SDK, the JDBC endpoint, the Postgres-wire
+    # shim and anything anyone writes later are all bound by it; no client can
+    # widen it by asking differently.
+    auth:
+      # Comma-separated. Empty accepts all three:
+      #   oidc              — a Keycloak JWT. What the browser uses; turning this
+      #                       off leaves a headless, token-only deployment.
+      #   api-token-bearer  — aran_pat_… in an Authorization: Bearer header (the SDK).
+      #   api-token-basic   — aran_pat_… inside HTTP Basic. The ONLY presentation a
+      #                       JDBC or Postgres-wire client can make: those drivers
+      #                       offer a user and a password, never a header. Disable
+      #                       it if a token typed into a SQL client's password box —
+      #                       which then lives in that tool's saved connection
+      #                       profile and logs — is not acceptable here. Doing so
+      #                       disables JDBC access, by design.
+      # An unknown name fails startup rather than silently narrowing the allowlist.
+      methods: ${ARAN_AUTH_METHODS:}
+
+      # Refuse any credentialled request that did not arrive over TLS. Loopback is
+      # always exempt, so switching this on does not break local development.
+      # Honours X-Forwarded-Proto only from aran.security.trusted-proxies above, so
+      # a TLS-terminating load balancer works and a client claiming it does not.
+      # ⚠ DEV-ONLY default — set ARAN_AUTH_REQUIRE_TLS=true in any deployed
+      # environment. It defaults off only because container-to-container HTTP is
+      # how the local compose stack and the e2e suite talk to the backend.
+      require-tls: ${ARAN_AUTH_REQUIRE_TLS:false}
+  jdbc:
+    driver-cache-dir: ${ARAN_DRIVER_CACHE_DIR:/var/aran/drivers}
+
+  # --- Identity provider (Keycloak Admin API) ---
+  # Aran creates and manages users through its own admin UI; this is how it reaches the
+  # system that actually stores the credential. A CONFIDENTIAL client with a service
+  # account, holding only manage-users and view-users from realm-management — not the
+  # bootstrap admin, which would hand Aran the whole realm, and not aran-web, which is
+  # public and therefore has no service account at all.
+  #
+  # Nothing about tenants or roles goes through here: a user's tenant lives in Aran's
+  # membership table (V23), so this integration is four calls rather than an integration.
+  identity:
+    provider: ${ARAN_IDENTITY_PROVIDER:keycloak}
+    keycloak:
+      base-url: ${ARAN_KEYCLOAK_URL:http://localhost:8080}
+      realm: ${ARAN_KEYCLOAK_REALM:aran}
+      client-id: ${ARAN_KEYCLOAK_ADMIN_CLIENT_ID:aran-backend}
+      # ⚠ DEV-ONLY default — override in any deployed environment.
+      client-secret: ${ARAN_KEYCLOAK_ADMIN_CLIENT_SECRET:dev-backend-secret-change-in-prod}
+
+  # --- S3 lake service integration (aran-lake) ---
+  lake:
+    url: ${ARAN_LAKE_URL:http://localhost:8085}
+    secret: ${ARAN_LAKE_SECRET:dev-shared-secret-change-in-prod}
+    # Ceiling on ONE lake-native import (PostgreSQL today), and how often Aran asks whether it is
+    # done. Aran waits on the lake job in the import's own job thread; without a deadline a lake
+    # job that never finishes holds that row RUNNING with nothing able to end it. Generous on
+    # purpose — a big table is legitimately slow, and this exists to bound an unbounded wait, not
+    # to cap useful work. Timing out does NOT cancel the lake's own job: the lake has no cancel
+    # endpoint, so its import may finish and register a snapshot after Aran has given up.
+    import-timeout: ${ARAN_LAKE_IMPORT_TIMEOUT:30m}
+    import-poll-interval: ${ARAN_LAKE_IMPORT_POLL_INTERVAL:2s}
+
+  # --- Query engine ---
+  query:
+    # On-disk cache of lake snapshots, transcoded to Parquet on fill. Snapshots are immutable and
+    # content-addressed (a re-ingest mints a new snapshotId), so entries never go stale — the only
+    # policy is eviction. See SnapshotCache for the full contract.
+    snapshot-cache:
+      # Empty → <java.io.tmpdir>/aran-snapshot-cache. Point this at a real volume in production;
+      # a container's tmpdir is lost on restart, which only costs a cold cache, not correctness.
+      dir: ${ARAN_SNAPSHOT_CACHE_DIR:}
+      # LRU budget in bytes. 0 disables caching entirely (the pre-cache behaviour).
+      # Size this against your data: the per-entry ceiling is max-bytes/4, so a budget under
+      # four times your largest snapshot admits nothing and every query falls back.
+      max-bytes: ${ARAN_SNAPSHOT_CACHE_MAX_BYTES:2147483648}
+    # On-disk cache of per-class WRAPPER OUTPUTS, materialised as Parquet sorted by the class's
+    # join keys — the engine's "index". Keyed on (tenant, snapshotId, wrapper text, sort spec),
+    # all content-addressed, so like the snapshot cache it has no invalidation problem, only
+    # eviction. Federated and EXPANDED classes are never cached. See WrapperOutputCache.
+    wrapper-cache:
+      # Empty → <java.io.tmpdir>/aran-wrapper-cache. Same volume advice as the snapshot cache.
+      dir: ${ARAN_WRAPPER_CACHE_DIR:}
+      # LRU budget in bytes; per-entry ceiling is max-bytes/4. 0 disables the cache — every
+      # query then executes wrappers over raw snapshots exactly as before it existed.
+      max-bytes: ${ARAN_WRAPPER_CACHE_MAX_BYTES:1073741824}
+    # Physical placement (λ): for a dataset with BOTH a lake copy and a live upstream (today:
+    # a table imported from a federated relational repository), each OQL query chooses snapshot
+    # or live by transfer-aware cost, gated by the copy's declared refresh policy — an
+    # Every-maintained copy may serve; Manual or stale copies never silently substitute for
+    # live.
+    planner:
+      # PERF-P1: planning grows as branches^joins, and a six-hop chain over two-source classes
+      # used to exhaust the heap and take the JVM with it. The budget is a count of rule
+      # PRODUCTIONS, not seconds, so the plan a query gets is the same on every machine; past it
+      # the optimizer answers with its best plan so far and the plan view says so. Sized from the
+      # measured corpus (build/perf/report.md): no corpus entry reaches it, a 4-hop chain over
+      # two-source classes does. 0 disables the count. The wall-clock guard is the second guard
+      # only — when it trips, the plan shape depends on the machine.
+      production-budget: ${ARAN_PLANNER_PRODUCTION_BUDGET:50000}
+      wall-clock-guard: ${ARAN_PLANNER_WALL_CLOCK_GUARD:20s}
+    placement:
+      enabled: ${ARAN_PLACEMENT_ENABLED:true}
+      # Per-ROW weights (byte widths cancel while both leaves move the same columns).
+      # live/local = 25 means a live read must keep under 1/25th of the rows to beat a local
+      # snapshot scan. Declared guesses until the perf harness calibrates them (A4).
+      live-lambda: ${ARAN_PLACEMENT_LIVE_LAMBDA:25.0}
+      local-lambda: ${ARAN_PLACEMENT_LOCAL_LAMBDA:1.0}
+      # An Every(interval) copy stays legal until staleness exceeds factor × interval — one
+      # skipped scheduler tick tolerated, a silently broken refresh is not.
+      stale-grace-factor: ${ARAN_PLACEMENT_STALE_GRACE_FACTOR:2.0}
+
+  # --- FREYJA sidecar (profiling + join discovery) ---
+  freyja:
+    url: ${ARAN_FREYJA_URL:http://localhost:8086}
+    # Must equal the sidecar's FREYJA_SHARED_SECRET. freyja enforces the bearer only
+    # when its own variable is set, so an empty value here sends no header and keeps a
+    # sidecar started before this existed working. Set BOTH before freyja is reachable
+    # from anywhere but localhost.
+    secret: ${ARAN_FREYJA_SECRET:dev-freyja-secret-change-in-prod}
+
+  # --- Apache Jena Fuseki integration (Layer 2) ---
+  fuseki:
+    base-url: ${ARAN_FUSEKI_URL:http://localhost:3030}
+    username: ${ARAN_FUSEKI_USERNAME:admin}
+    password: ${ARAN_FUSEKI_PASSWORD:admin}
+
+  # --- Licensing ---------------------------------------------------------
+  # `mode` selects the LicenseProvider implementation. Three values:
+  #   database     — cloud SaaS: reads from the `license` table. Default.
+  #   signed-token — self-hosted commercial: validates a JWS license token signed
+  #                  by the vendor. Requires aran.licensing.token.* below and
+  #                  the aran-adapter-license-token jar on the classpath.
+  #   unlimited    — OSS single-node install: every tenant gets uncapped
+  #                  entitlements and no `license` row is consulted. What
+  #                  compose.standalone.yml runs. See UnlimitedLicensingConfig;
+  #                  the `plans` block below is ignored entirely in this mode.
+  licensing:
+    mode: ${ARAN_LICENSING_MODE:database}
+
+    # Plan → default limits, for `database` mode only. Per-tenant overrides live
+    # on the `license` row and take precedence when set. Adjust freely — this is
+    # the one place pricing/packaging tweaks happen.
+    # These are commercial tiers, not defaults an OSS operator should ever meet:
+    # `free` at 5 users / 3 projects is a trial limit. The OSS install does not
+    # read this block at all — it runs `unlimited` — which is the counts-based
+    # counterpart of the byte-ceiling reasoning immediately below.
+    # Byte ceilings (`max-storage-bytes`, `max-monthly-egress-bytes`) are deliberately absent
+    # from every plan below. Absent means no ceiling, and that is the right OSS default: a
+    # self-hosted operator owns the disk, and a limit they did not ask for that refuses their
+    # first upload is a bug, not a safety feature. Set one to turn it into a circuit breaker —
+    # e.g. `max-storage-bytes: 107374182400` for 100 GiB — which is what stops a runaway
+    # materialization taking the boot volume with it. Cloud plans will set both.
+    plans:
+      free:
+        max-users: 5
+        max-projects: 3
+        features: []
+      pro:
+        max-users: 50
+        max-projects: 100
+        features:
+          - AUDIT_LOG_EXPORT
+      enterprise:
+        max-users: 10000
+        max-projects: 10000
+        features:
+          - AUDIT_LOG_EXPORT
+
+    # Self-hosted token config. Unused in database mode; the @ConditionalOn
+    # in SignedTokenLicensingConfig keeps this from being required there.
+    token:
+      public-key-path: ${ARAN_LICENSE_PUBLIC_KEY_PATH:/etc/aran/license-public.pem}
+      value: ${ARAN_LICENSE_TOKEN:}
+
+  # --- Singer taps this deployment is willing to run ---
+  # A tap is an executable Aran launches as a subprocess, so the command is
+  # DEPLOYMENT configuration and never user input: a user picks an id from this
+  # list and supplies values, and Aran builds the argv. Letting a registration
+  # form name the command would hand every tenant code execution as the backend.
+  #
+  # Empty by default, which means the feature is off: with no tap listed, the
+  # SINGER_TAP repository kind cannot be registered and the form says the feature
+  # is off rather than showing an empty dropdown. Enabling it is a deliberate act
+  # by whoever runs the server — install the tap, then name it here. A complete
+  # entry looks like this:
+  #
+  #   singer:
+  #     taps:
+  #       - id: exchangeratesapi                      # what a user selects
+  #         label: Exchange Rates API                 # what the form shows
+  #         command: [/opt/taps/bin/tap-exchangeratesapi]   # absolute path on THIS host
+  #         config-keys: [base, start_date, api_key]  # what a user may set
+  #         secret-keys: [api_key]                    # which of those are credentials
+  #
+  # config-keys is a whitelist: a setting the tap does not declare is refused
+  # rather than dropped. Values are written to a JSON file the tap reads, never
+  # appended to the command, so a value cannot become another argument.
+  # secret-keys decides which values the API masks and which the update sentinel
+  # preserves; a key that is not listed is shown to anyone who can read the
+  # repository. A malformed entry fails startup — see SingerTapConfig.
+  #
+  # The tap binary is the operator's to install and to keep licensed: Aran ships
+  # none and depends on none (see SingerTapRunner's licensing note).
+  singer:
+    taps: []
+
+  # --- Shape as cube (the OLAP annotation layer) ---
+  # Off by default. The cube slice's first live run (V62) found open defects (a CSV fact
+  # admits only COUNT measures, and a star table can carry full-IRI column names), and the
+  # wizard has never run live, so it stays off until those are fixed. With this false, CubeController is
+  # not a bean at all — every /api/projects/{id}/cubes route answers 404 (the feature
+  # does not exist here; a 403 would claim it does), and the SPA hides the "shape as
+  # cube" wizard and the Cubes panel because GET /api/me reports features.cubes=false.
+  #
+  # Nothing else changes: a cube's star tables are ordinary MATERIALIZED data products,
+  # so any cube created while this was on keeps serving through the products tier and
+  # the JDBC `products` schema with this off. What is lost is the ability to list,
+  # create, inspect or delete the cube DEFINITION.
+  #
+  # Retiring the flag now waits on that ruling, not on a first run.
+  cubes:
+    enabled: ${ARAN_CUBES_ENABLED:false}
+
+  # Gap 2 — the produce-side Iceberg REST catalog (/api/iceberg/v1). Every file location in the
+  # served table metadata is minted under this origin + /api/iceberg/files. Blank (the default)
+  # derives the origin from each request, which is right whenever clients reach Aran directly;
+  # set it to the EXTERNAL origin (e.g. https://aran.example) behind a proxy that rewrites Host,
+  # or clients will be handed file URLs they cannot reach.
+  iceberg:
+    public-base-url: ${ARAN_ICEBERG_PUBLIC_BASE_URL:}
+
+logging:
+  # Set ARAN_LOG_FORMAT=ecs in production to emit structured JSON logs (ECS schema).
+  # Leave unset (empty string) for human-readable plaintext in local development.
+  structured:
+    format:
+      console: ${ARAN_LOG_FORMAT:}
+  level:
+    edu.upc.dtak.aran: INFO
+    edu.upc.dtak.aran.plugin: INFO
+
+---
+# ===========================================================================
+#  Dev profile (SPRING_PROFILES_ACTIVE=dev / --spring.profiles.active=dev)
+#  Applied automatically by the committed IntelliJ run configuration.
+#  Never active in production.
+# ===========================================================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # Extend Flyway's migration locations to include the seed directory.
+  # (aran.security.allow-insecure-defaults for this profile is set at the end of
+  # this document — see the aran: block below.)
+  # db/seed/ is excluded from aran-adapter-persistence's jar (see that module's
+  # build.gradle, MIGRATIONS-8) and staged onto the classpath only for a
+  # Gradle-launched stack, so Flyway finds nothing there in a production artifact
+  # even if this location were configured.
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/seed
+
+  # Spring DevTools: hot-reload Java changes without a full restart.
+  # Add `developmentOnly 'org.springframework.boot:spring-boot-devtools'`
+  # to aran-application/build.gradle to activate (see CONTRIBUTING.md).
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: aran-core/src/main/java, aran-application/src/main/java, aran-operators/schema-integration/src/main/java, aran-operators/bootstrapping/src/main/java, aran-operators/query-engine/src/main/java, aran-operators/join-discovery/src/main/java, aran-operators/constraint-discovery/src/main/java, aran-operators/profiling/src/main/java
+    livereload:
+      enabled: false   # we use Vite HMR on the frontend, not LiveReload
+
+logging:
+  level:
+    edu.upc.dtak.aran: DEBUG    # verbose in dev — INFO in the default profile above
+    org.flywaydb: INFO
+
+aran:
+  jdbc:
+    driver-cache-dir: drivers   # local workspace-relative path for dev; easy to clean
+  security:
+    # A laptop stack is meant to run with the published defaults. InsecureDefaultsGuard
+    # still logs exactly which credentials are defaulted, so the list stays visible.
+    allow-insecure-defaults: true
+
+  # --- Scheduled dataset refresh (RefreshPolicy.Every) ---
+  # How often Aran LOOKS for due refreshes, not how often anything is refreshed —
+  # that is each dataset's own policy, with a five-minute floor. Polling more
+  # often than the shortest policy buys nothing.
+  #
+  # Safe to run on every instance: claims go through the database
+  # (FOR UPDATE SKIP LOCKED), so each due refresh starts exactly once however many
+  # instances are polling. Set enabled: false to take an instance out of the
+  # rotation entirely — e.g. one dedicated to serving queries.
+  refresh:
+    scheduler:
+      enabled: ${ARAN_REFRESH_SCHEDULER_ENABLED:true}
+      poll-interval: ${ARAN_REFRESH_POLL_INTERVAL:60s}
+      # Keeps extracts out of startup, while the lake and freyja are still coming up.
+      initial-delay: ${ARAN_REFRESH_INITIAL_DELAY:60s}
+
+---
+# ===========================================================================
+#  standalone — the single-node OSS topology
+#
+#  One compose file, one Postgres serving both databases, the SPA served from
+#  this image. Six services: postgres, keycloak, fuseki, aran-app, aran-lake,
+#  garage. Against the default topology's two compose files, ~8 services and two
+#  Postgres instances, that is the deliverable: one file, one command.
+#
+#  What this profile is NOT: an auth bypass. Authentication is always required.
+#  The install ships a seeded owner
+#  instead, created by AdminBootstrap.
+# ===========================================================================
+spring:
+  config:
+    activate:
+      on-profile: standalone
+  web:
+    resources:
+      # The SPA baked in by the Dockerfile's frontend stage (WITH_UI=true).
+      # classpath:/static/ stays first so a jar-packaged UI still wins if one exists.
+      static-locations: classpath:/static/,file:/app/static/
+
+aran:
+  # The env name the compose file and docs use. Without this bridge the variable
+  # silently never reaches AdminBootstrap — @Value has no relaxed env binding.
+  bootstrap:
+    admin-password: ${ARAN_ADMIN_PASSWORD:}
+  security:
+    # ⚠ DELIBERATE, AND ARGUABLY WRONG — flagged rather than decided unilaterally.
+    #
+    # compose.standalone.yml ships its own defaults: ARAN_LAKE_SECRET
+    # standalone-secret-change-me, ARAN_FUSEKI_PASSWORD admin, ARAN_DB_PASSWORD aran,
+    # ARAN_KEYCLOAK_ADMIN_CLIENT_SECRET dev-backend-secret-change-in-prod. Setting this
+    # false would make InsecureDefaultsGuard refuse to boot, which is correct for a
+    # deployment and would also break "one file, one command" — the entire promise of
+    # this profile — for every evaluator.
+    #
+    # Left permissive so the topology still starts, with the guard naming each defaulted
+    # credential in the log. Whether the shipped product should demand real secrets before
+    # GA is a product call, not yet taken.
+    allow-insecure-defaults: true

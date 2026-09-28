@@ -1,0 +1,17 @@
+-- Drop dataset.wrapper.
+--
+-- The column held the flat single-SELECT that WrapperGenerator produced at bootstrap. Nothing
+-- ever executed it: the query engine runs nx:wrapperSql from the schema graph, and the string a
+-- user edits is model_source.wrapper_sql. Of the three fields called wrapper, this one was read
+-- by nothing: display only.
+--
+-- The accessor was @Deprecated rather than deleted because the field was simultaneously a JPA
+-- column and a wire field, so removing it meant a migration and a contract change. Pre-release,
+-- with no consumer to keep compatible, that reason expired — and the deprecation was not free:
+-- 17 of the repo's 31 javac warnings were this one accessor, which is what made -Werror look
+-- expensive.
+--
+-- Not reversible by config. The data is not recoverable after this runs, which is acceptable
+-- precisely because nothing read it; a wrapper that matters lives in model_source.wrapper_sql
+-- and in the schema graph, both untouched here.
+ALTER TABLE dataset DROP COLUMN IF EXISTS wrapper;

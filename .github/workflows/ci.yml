@@ -1,0 +1,265 @@
+name: CI
+
+# Runs on every push to main/develop and on pull requests targeting main.
+#
+# The test jobs call ./scripts/validate.sh, one part each (--java / --web / --python), so CI and
+# a developer's machine run the same gate. This file used to re-implement the script's command
+# list, and the two drifted twice — a suite added to one and not the other had no automated
+# gate at all. Add a suite to validate.sh; CI picks it up.
+#
+# No repository secrets are needed. Images go to GitHub Container Registry with the built-in
+# GITHUB_TOKEN (the images job raises its own permissions); nothing here reads Docker Hub.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  JAVA_VERSION: '25'
+
+# Least privilege by default. The images job raises what it needs.
+permissions:
+  contents: read
+
+# A newer push to the same ref makes the in-flight run redundant. PRs cancel;
+# main does not, so every merged commit keeps a complete result.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # --------------------------------------------------------------------------
+  #  Java: the Gradle build and every Java suite, Docker-tagged ITs included
+  # --------------------------------------------------------------------------
+  java:
+    name: Java (validate.sh --java)
+    runs-on: ubuntu-latest
+    # Unmeasured: the full Java suite with its Testcontainers ITs has never run in Actions (V15).
+    # Replace with the first green run's duration plus a margin.
+    timeout-minutes: 60
+
+    # No `services:` block. The integration tests start their own Postgres/Garage through
+    # Testcontainers against the runner's Docker daemon (BaseIntegrationTest), so a service
+    # container here was a second database nothing connected to.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: validate.sh --java
+        run: ./scripts/validate.sh --java
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-test-results
+          path: '**/build/reports/tests/'
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  #  Web: aran-web build (tsc + vite), lint, Vitest
+  # --------------------------------------------------------------------------
+  web:
+    name: Web (validate.sh --web)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: aran-web/package-lock.json
+
+      # No generated `openapi.d.ts` step on purpose: src/services/types.ts is hand-written and
+      # is the only source for wire shapes, and
+      # `npm run generate:api` needs a live backend this job does not have.
+      - name: Install dependencies
+        run: make web-deps
+
+      - name: validate.sh --web
+        run: ./scripts/validate.sh --web
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: aran-web/dist/
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  #  Python: ruff, aran-lake, freyja, aran-client, aran-mcp, sidecar contract
+  # --------------------------------------------------------------------------
+  python:
+    name: Python (validate.sh --python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            aran-lake/pyproject.toml
+            freyja/requirements.txt
+            aran-client/pyproject.toml
+            aran-mcp/pyproject.toml
+
+      # The same targets `make bootstrap` runs, minus node_modules, which this job does not use.
+      - name: Create the venvs
+        run: make aran-lake-venv freyja-deps aran-client aran-mcp
+
+      - name: validate.sh --python
+        run: ./scripts/validate.sh --python
+
+  # --------------------------------------------------------------------------
+  #  Supply chain: committed secrets, and the one binary blob in the tree
+  # --------------------------------------------------------------------------
+  supply-chain:
+    name: Supply Chain
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks scans history, not just the checked-out tree. A secret that
+          # was committed and then removed is still a leaked secret — the commit
+          # is what an attacker clones.
+          fetch-depth: 0
+
+      # Development sentinels are allowlisted in .gitleaks.toml by value, not by
+      # path, so a real secret pasted into the same file is still caught. The
+      # binary rather than gitleaks-action, which needs a licence key on an
+      # organisation's repositories.
+      - name: Scan for committed secrets
+        env:
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          ./gitleaks git --config .gitleaks.toml --redact --verbose .
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # freyja/models/model.pkl is a committed joblib pickle that profile_api
+      # loads at import. Unpickling executes whatever the pickle says to
+      # execute, so the blob is only as safe as its provenance — and it is
+      # about to be readable, and re-committable, by anyone. picklescan reads
+      # the opcodes without running them and fails on any that import or call.
+      # See freyja/models/README.md.
+      - name: Scan the committed model for unsafe opcodes
+        run: |
+          python -m pip install --quiet picklescan
+          python -m picklescan --path freyja/models/model.pkl
+
+  # --------------------------------------------------------------------------
+  #  Images: build + push the three Aran-built images to GHCR (main only)
+  # --------------------------------------------------------------------------
+  images:
+    name: Image (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # supply-chain too: the freyja image ships model.pkl, so a failed pickle scan must not publish.
+    needs: [java, web, python, supply-chain]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    # linux/amd64 only. The Dockerfile compiles the whole Gradle build inside the image, so an
+    # arm64 leg means that build under QEMU emulation — and there was no QEMU step, so the old
+    # leg could not have run at all. Reinstate arm64 on a native arm runner, measured, not here.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The product image carries the SPA: compose.standalone.yml serves UI and API from one
+          # origin, and a UI-less image published as "the product" is what D10 rules out.
+          - image: aran
+            context: .
+            file: Dockerfile
+            build-args: |
+              WITH_UI=true
+              GIT_COMMIT=${{ github.sha }}
+          - image: aran-lake
+            context: aran-lake
+            file: aran-lake/Dockerfile
+            build-args: ''
+          - image: aran-freyja
+            context: freyja
+            file: freyja/Dockerfile
+            build-args: ''
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # One platform version for every image, read from where the build declares it. A test
+      # (PublishedImagesTest) holds compose.standalone.yml's default tag to the same number, so
+      # a checkout's compose file pulls the images its own release published.
+      - name: Resolve image name and platform version
+        id: meta-input
+        run: |
+          version="$(sed -n "s/^[[:space:]]*version = '\(.*\)'$/\1/p" build.gradle)"
+          if [ -z "$version" ]; then
+            echo "could not read the platform version from build.gradle" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ matrix.image }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # `latest` moves with main; the version tag is what compose.standalone.yml pins (it moves
+      # too while the version is a -SNAPSHOT, and is fixed from the release commit on); `sha-`
+      # names exactly one build.
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.meta-input.outputs.name }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.meta-input.outputs.version }}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          platforms: linux/amd64
+          build-args: ${{ matrix.build-args }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}

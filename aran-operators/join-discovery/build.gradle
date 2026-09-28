@@ -1,0 +1,16 @@
+// ===========================================================================
+//  join-discovery operator
+//  Responsible for join and relationship discovery.
+//  Depends directly on aran-core to implement its core Operator bean.
+// ===========================================================================
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':aran-core')
+    implementation 'org.jspecify:jspecify'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springframework:spring-context'
+    implementation 'org.slf4j:slf4j-api'
+}

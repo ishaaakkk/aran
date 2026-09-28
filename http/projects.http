@@ -1,0 +1,70 @@
+### ============================================================
+###  Projects API
+###  Run auth.http first to populate {{access_token}}.
+###  {{tenantId}} is set in http-client.env.json.
+### ============================================================
+
+### List visible projects (projects the caller has a ProjectMember row for)
+GET {{baseUrl}}/api/projects
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Create a project
+# @name createProject
+POST {{baseUrl}}/api/projects
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "My First Project",
+  "description": "Created via IntelliJ HTTP client"
+}
+
+> {%
+  client.global.set("project_id", response.body.id);
+  client.log("Created project: " + response.body.id);
+%}
+
+### Get a specific project (uses project_id from createProject above)
+GET {{baseUrl}}/api/projects/{{project_id}}
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### List members of a project
+GET {{baseUrl}}/api/projects/{{project_id}}/members
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Add a member to a project (caller must be tenant OWNER)
+###   Replace USER_ID with the target user's Aran user id (from GET /api/me)
+POST {{baseUrl}}/api/projects/{{project_id}}/members
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "userId": "REPLACE_WITH_TARGET_USER_ID"
+}
+
+### ── Error cases ────────────────────────────────────────────
+
+### 404 — project that doesn't exist or isn't visible
+GET {{baseUrl}}/api/projects/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### 400 — blank project name (validation)
+POST {{baseUrl}}/api/projects
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "description": "This should fail"
+}
+
+### 429 — rate limit (send this request >300 times quickly to trigger)
+### Uncomment and run in a loop from the terminal instead:
+### for i in {1..350}; do curl -s -o /dev/null -w "%{http_code}\n" \
+###   -H "Authorization: Bearer $TOKEN" http://localhost:8081/api/projects; done

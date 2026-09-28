@@ -1,0 +1,2 @@
+aran-operators/query-engine/src/test/resources/plan-goldens/*.txt text eol=lf
+aran-operators/query-engine/src/test/resources/perf-goldens/*.txt text eol=lf

@@ -1,0 +1,13 @@
+-- The sample the 'exact' join score estimates value overlap from (S13-2, closing review).
+--
+-- freyja keeps the SAMPLE_SIZE smallest md5-prefix hashes of each column's distinct cleaned
+-- values (freyja/profiling/value_sketch.py). common_values could not serve: it holds the ten
+-- MOST FREQUENT values, so a unique column's is its lexicographic prefix ('1', '10', '100', …),
+-- shared by every other surrogate key, while a foreign key's is picked by reference count —
+-- join discovery ranked an unrelated serial column above the real foreign key.
+--
+-- Comma-joined like common_values; a hash is lowercase hex, so no value can hold the separator.
+-- No backfill: a sample needs the column's data. Existing rows stay NULL until the dataset is
+-- re-profiled, and freyja scores such a column only where its common_values are its whole value
+-- set (ten or fewer distinct values); every other pair involving it is left unscored.
+ALTER TABLE column_profile ADD COLUMN value_hash_sample TEXT;

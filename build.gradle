@@ -1,0 +1,134 @@
+// ===========================================================================
+//  Aran — root build script
+//  Stack: Java 25 (LTS) · Spring Boot 4.0.6 · Spring Framework 7 · Gradle 9
+// ===========================================================================
+//
+//  Notes on the modern Spring Boot 4 build model:
+//   * The legacy `io.spring.dependency-management` plugin is NO LONGER used.
+//     Spring Boot 4's Gradle plugin imports the spring-boot-dependencies BOM
+//     directly via a platform() dependency (see subprojects block below).
+//   * Spring Boot 4 is fully modularised: pull in only the starters each
+//     module actually needs. This keeps the plugin-SPI modules lean.
+//
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.6' apply false
+    // CVE scanning for the Java dependency tree. Nothing else in this repo scans it:
+    // dependency-review.yml only inspects dependencies a PR *adds*, so anything already
+    // on the classpath was never checked. Run with `./gradlew dependencyCheckAnalyze`.
+    id 'org.owasp.dependencycheck' version '10.0.4'
+}
+
+// The NVD feed requires an API key; without one the download is heavily rate-limited.
+// Set NVD_API_KEY in the environment (and as a repo secret for CI) to make this usable.
+dependencyCheck {
+    failBuildOnCVSS = 7.0          // fail on high/critical only
+    formats = ['HTML', 'JSON']
+    nvd {
+        apiKey = System.getenv('NVD_API_KEY')
+    }
+    // Test-only and build-time configurations are not shipped, so a CVE there is not
+    // a product vulnerability. Scanning them anyway produces noise that trains people
+    // to ignore the report.
+    skipConfigurations = ['testImplementation', 'testRuntimeOnly', 'testCompileClasspath', 'testRuntimeClasspath']
+    analyzers {
+        assemblyEnabled = false     // no .NET assemblies here
+        nodeAuditEnabled = false    // npm audit covers aran-web separately
+        nodeEnabled = false
+    }
+}
+
+allprojects {
+    group = 'edu.upc.dtak.aran'
+    version = '0.1.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+
+    // Versions shared by more than one module — single source of truth so the
+    // pins can't drift apart (DuckDB engine compatibility matters: the Java
+    // side and the Python lake read the same parquet artifacts).
+    //
+    // Stay on 1.x. DuckDB v2.0 ("Cyanoptera") is announced for autumn 2026 and its
+    // preview names a new PEG parser whose grammar extensions can extend — which is
+    // the exact mechanism that produces "reads a file while naming no function"
+    // shapes, and both of Aran's SQL screens (WrapperSqlValidator.findForbiddenConstruct
+    // and the lake's regex) match on names. Every DuckDB-behaviour claim in this repo
+    // was verified against a 1.x engine, so 2.0 is a re-verification exercise, not a
+    // version bump (V23). The lake's `duckdb<2.0.0` cap
+    // is the same decision on the Python side.
+    ext {
+        duckdbJdbcVersion = '1.5.5.1'
+        // Gap 2: iceberg-core is confined to aran-adapter-iceberg, but the pin lives here with
+        // its sibling so a future consumer cannot silently pick a second version.
+        icebergVersion = '1.7.1'
+        // One Jena for every module, and 5.2.0 because that is what every live validation ran
+        // on. aran-application once compiled and tested against 5.3.0 while its bootJar shipped
+        // core's 5.2.0 — a NoSuchMethodError no test could observe, since the tests ran on 5.3.0
+        // too (S15-8). aran-core exposes it as `api`; no other module declares jena-arq. Do not
+        // bump before the v0.1.0 tag (D10).
+        jenaVersion = '5.2.0'
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
+
+    // Every module aligns dependency versions against the Spring Boot 4 BOM,
+    // even modules that are not themselves Spring Boot applications.
+    dependencies {
+        implementation platform('org.springframework.boot:spring-boot-dependencies:4.0.6')
+        implementation 'org.slf4j:slf4j-api'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+
+        // Forward the opt-in probe properties to the test JVM. Gradle does not pass -D through by
+        // default, so without this the tests that are *meant* to be driven from the command line
+        // silently skip and report success — which is worse than failing, because it looks like
+        // they ran. Only this prefix is forwarded; a blanket passthrough would make the build
+        // depend on whatever happens to be in the invoking environment.
+        providers.systemPropertiesPrefixedBy('aran.').get().each { k, v -> systemProperty(k, v) }
+        // JDK 21+ restricts dynamic agent self-attach, and the external-process
+        // fallback fails intermittently on JDK 25 ("Could not self-attach to current
+        // VM"), killing the first Mockito test of a run at random. Attach mockito-core
+        // as a startup -javaagent instead — Mockito's documented recommendation — so
+        // no runtime attach ever happens. No-op for modules without Mockito.
+        doFirst {
+            def mockito = classpath.find { it.name.startsWith('mockito-core') }
+            if (mockito != null) {
+                jvmArgs "-javaagent:${mockito}"
+            }
+        }
+        // CredentialEncryptionConverter is instantiated by Hibernate, outside the Spring
+        // context, so it reads the profile from the OS environment rather than from
+        // @ActiveProfiles. Without this it fails fast (as it must in production, where
+        // ARAN_ENCRYPTION_KEY is mandatory) and every Spring context test dies on startup.
+        environment 'SPRING_PROFILES_ACTIVE', 'test'
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        // Surface preview/standard warnings early on a fresh codebase.
+        options.compilerArgs << '-Xlint:all'
+    }
+
+    // The Dockerfile's dependency-cache layer runs this with only the build scripts present, so
+    // an image build downloads each module's jars once per build-script change rather than once
+    // per source change. The `dependencies` report it replaced resolves the ROOT project only,
+    // which has none — that layer cached no module's jars even when its COPY list was complete.
+    tasks.register('resolveDependencies') {
+        def resolvable = configurations.matching { it.canBeResolved }
+        doLast { resolvable.each { it.resolve() } }
+    }
+}

@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.installed.cfg
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# uv
+.uv/
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.tox/
+
+# Type checkers
+.mypy_cache/
+.ruff_cache/
+.pytype/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Local data
+*.duckdb
+*.duckdb.wal
+*.parquet
+local-data/

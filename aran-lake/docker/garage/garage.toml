@@ -1,0 +1,48 @@
+# =============================================================================
+#  Garage configuration — single-node dev mode
+#
+#  Production deployments would have:
+#    - multiple nodes, real replication factor (3)
+#    - real RPC secret + TLS
+#    - external metadata DB (LMDB on fast SSD)
+#    - separate metadata and data directories on different disks
+#
+#  None of that matters for development. This config makes Garage usable
+#  from `docker compose up` with no manual cluster bootstrap.
+# =============================================================================
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir     = "/var/lib/garage/data"
+
+# Single-node dev mode — replication=1
+replication_factor = 1
+compression_level  = 1
+db_engine = "sqlite"
+
+# Generated once; this value is only for local dev — never reuse in production.
+rpc_secret = "8a9c4d2e6b1f5a3c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c"
+
+# IPv4 wildcard binds, not [::]: on a host booted with ipv6.disable=1 a [::] socket cannot be
+# created at all (EAFNOSUPPORT), Garage exits in a restart loop, and `compose up` stops at
+# garage-init's dependency on it — V69's first Linux run hit exactly that. Every client reaches
+# Garage by service name over Docker's IPv4 network, so no client ever dialled the IPv6 side.
+rpc_bind_addr   = "0.0.0.0:3901"
+rpc_public_addr = "garage:3901"
+
+[s3_api]
+api_bind_addr     = "0.0.0.0:3900"
+s3_region         = "garage"
+root_domain       = ".s3.garage"
+
+[s3_web]
+bind_addr   = "0.0.0.0:3902"
+root_domain = ".web.garage"
+index       = "index.html"
+
+[k2v_api]
+api_bind_addr = "0.0.0.0:3904"
+
+[admin]
+api_bind_addr = "0.0.0.0:3903"
+admin_token   = "dev-admin-token-change-in-prod"
+metrics_token = "dev-metrics-token"

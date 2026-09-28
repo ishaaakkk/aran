@@ -1,0 +1,59 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':aran-core')
+    implementation 'org.jspecify:jspecify'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springframework:spring-context'
+    implementation 'org.slf4j:slf4j-api'
+    implementation 'org.apache.calcite:calcite-core:1.41.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.16.1'
+    testImplementation "org.duckdb:duckdb_jdbc:${duckdbJdbcVersion}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Federated object-storage tests (docker-tagged): the resolver reads an s3:// object over
+    // httpfs, so its faithful test needs a live S3-compatible store — aran-core's GarageContainer
+    // fixture, shared with aran-operators/bootstrapping. The MinIO SDK stays only as the plain S3
+    // client that uploads the object under test.
+    testImplementation testFixtures(project(':aran-core'))
+    testImplementation 'io.minio:minio:8.5.17'
+    // Federated perf tier (docker-tagged AND -Daran.perf-gated): PerfFederatedBenchmarkTest runs
+    // the same rows through a snapshot resolver and a live postgres_scan — the λ-calibration
+    // instrument (A4). The driver version matches the registry's pin.
+    testImplementation 'org.testcontainers:postgresql:1.21.4'
+    testImplementation 'org.postgresql:postgresql:42.7.5'
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        // `-PexcludeTags=docker` drops the docker-backed integration tests, which is what
+        // validate.sh --offline passes so this module runs without a Docker daemon. Unset in a
+        // normal build/CI, so everything runs there.
+        if (project.hasProperty('excludeTags')) {
+            excludeTags project.property('excludeTags').split(',')
+        }
+    }
+
+    // E2eOqlCorpusTest parses the OQL the browser specs send, read straight out of aran-web/e2e.
+    // Undeclared, an edit to a spec alone leaves this task up to date and the check never runs.
+    // Only *.ts: the corpus is read from those, and e2e/.auth holds session files that change
+    // on every browser run.
+    inputs.files(fileTree(rootProject.file('aran-web/e2e')) { include '**/*.ts' })
+            .withPropertyName('e2eOqlCorpus')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+
+    // The performance benchmark (PerfBenchmarkTest, -Daran.perf=true) plans deliberately
+    // pathological shapes — deep join chains over multi-source classes — and Gradle's default
+    // 512 MB test heap turns those into an OutOfMemoryError instead of a number. A benchmark
+    // that dies where it should report is worse than no benchmark, so give the opt-in run room.
+    // Guarded, so the ordinary gate keeps the default heap and nothing about a normal build
+    // changes. What is being measured here is the planning cliff (P1).
+    if (System.getProperty('aran.perf') == 'true') {
+        maxHeapSize = '2g'
+    }
+}

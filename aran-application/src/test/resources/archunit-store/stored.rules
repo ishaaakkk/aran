@@ -1,0 +1,8 @@
+#
+#Wed Sep 23 22:42:05 UTC 2026
+no\ classes\ should\ call\ method\ HttpClient.newBuilder()\ or\ should\ call\ method\ HttpClient.newHttpClient(),\ because\ each\ site\ picks\ its\ own\ timeouts\ and\ redirect\ policy;\ the\ boundaries\ sweep\ replaces\ them\ with\ one\ bounded\ helper=b2a05065-46b7-4f5f-8cfd-2e5b65434e95
+no\ classes\ should\ depend\ on\ classes\ that\ belong\ to\ any\ of\ [java.sql.DriverManager],\ because\ source\ connections\ come\ from\ DriverDownloader\ and\ DuckDB\ sessions\ from\ DuckDbSession;\ DriverManager's\ registry\ and\ login\ timeout\ are\ JVM-global=cb65b378-e2c4-46e4-909f-83fec6233d7f
+no\ classes\ that\ reside\ in\ a\ package\ 'edu.upc.dtak.aran.core..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ 'java.net.http..'=1da1cdb8-5acc-4f0f-92a8-e7bb78e030cf
+no\ classes\ that\ reside\ in\ a\ package\ 'edu.upc.dtak.aran.core..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ 'java.sql..'=d9b5b45b-7098-49ab-bdb6-131a1367d723
+no\ classes\ that\ reside\ in\ a\ package\ 'edu.upc.dtak.aran.core..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ 'org.apache.calcite..'=b6a8dd6f-e74d-4dd9-8df5-83e08b1ea061
+no\ classes\ that\ reside\ in\ a\ package\ 'edu.upc.dtak.aran.core..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ 'org.apache.jena..'=23d3125d-3777-4c7b-b74c-6a5e01d25dbc

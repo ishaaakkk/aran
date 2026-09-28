@@ -1,0 +1,5 @@
+PROJECT[key]
+  UNION[all=true, inputs=3]
+    SCAN[u_c0s0_C0]
+    SCAN[u_c0s1_C0]
+    SCAN[u_c0s2_C0]

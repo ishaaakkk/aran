@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# ===========================================================================
+#  Aran Stack CLI
+#  User-friendly wrapper for stack management operations.
+# ===========================================================================
+set -euo pipefail
+
+# Brand/Theme Colors from the Aran web app's tokens
+primary="\033[38;2;139;92;246m"        # Purple / Violet (#8B5CF6)
+bg_primary="\033[48;2;139;92;246m\033[38;2;255;255;255m" # White text on Violet background
+success="\033[38;2;61;206;160m"        # Neon Teal / Green (#3DCEA0)
+accent="\033[38;2;232;179;57m"         # Gold / Yellow (#E8B339)
+muted="\033[38;2;126;126;138m"         # Muted Slate (#7E7E8A)
+border="\033[38;2;50;50;65m"           # Cosmic dark border (#22222B)
+text="\033[38;2;232;232;238m"          # Bright foreground text
+bold="\033[1m"
+red="\033[38;2;232;115;107m"
+reset="\033[0m"
+
+# Print usage information
+show_help() {
+    echo -e "${bold}Aran Stack CLI${reset}"
+    echo ""
+    echo -e "${bold}Usage:${reset} ./aran <command>"
+    echo ""
+    echo -e "${bold}Commands:${reset}"
+    echo -e "  ${primary}start | up${reset}      Start all stack services (TUI)"
+    echo -e "  ${primary}stop | down${reset}     Shutdown all stack services cleanly (TUI)"
+    echo -e "  ${primary}restart${reset}         Restart all stack services"
+    echo -e "  ${primary}status${reset}          Display real-time service health check dashboard"
+    echo -e "  ${primary}install${reset}         Set up global shell execution and autocompletions"
+    echo -e "  ${primary}admin${reset}           Administrative recovery (see: ./aran admin)"
+    echo -e "  ${primary}help | -h${reset}       Show this help message"
+    echo ""
+}
+
+# Resolve script path (handling symbolic links recursively)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
+# Execute command
+case "${1:-help}" in
+    start|up)
+        ./scripts/startup.sh
+        ;;
+    stop|down)
+        ./scripts/shutdown.sh
+        ;;
+    restart)
+        ./scripts/shutdown.sh
+        ./scripts/startup.sh
+        ;;
+    install)
+        ./scripts/install.sh
+        ;;
+    admin)
+        # Recovery commands that must work when Aran itself does not — they talk to
+        # Keycloak directly rather than through Aran's API, because the case they exist
+        # for is an administrator who cannot log in. See scripts/admin-reset-password.sh.
+        case "${2:-help}" in
+            reset-password)
+                ./scripts/admin-reset-password.sh "${3:-}"
+                ;;
+            *)
+                echo -e "${bold}Aran admin commands${reset}"
+                echo ""
+                echo -e "  ${primary}reset-password <username>${reset}   Set a new temporary password"
+                echo ""
+                echo -e "${muted}Recovery only. Day-to-day user management lives in Aran's admin UI.${reset}"
+                ;;
+        esac
+        ;;
+    status)
+        # Check services
+        status_lake="OFFLINE"
+        if curl -sf http://localhost:8085/health >/dev/null 2>&1; then
+            status_lake="ONLINE "
+        fi
+        
+        status_freyja="OFFLINE"
+        if curl -sf http://localhost:8086/healthz >/dev/null 2>&1; then
+            status_freyja="ONLINE "
+        fi
+        
+        status_vite="OFFLINE"
+        if curl -sf http://localhost:5173 >/dev/null 2>&1; then
+            status_vite="ONLINE "
+        fi
+        
+        status_backend="OFFLINE"
+        # Actuator lives on the management port (8082, ARAN_MANAGEMENT_PORT), not on the
+        # API port — application.yml's `management.server.port`. The same URL
+        # scripts/startup.sh polls to decide the backend came up.
+        if curl -sf http://127.0.0.1:8082/actuator/health >/dev/null 2>&1; then
+            status_backend="ONLINE "
+        fi
+        
+        # Colorize statuses
+        if [ "$status_lake" == "ONLINE " ]; then
+            color_lake="${success}${bold}ONLINE ${reset}"
+        else
+            color_lake="${red}${bold}OFFLINE${reset}"
+        fi
+        
+        if [ "$status_freyja" == "ONLINE " ]; then
+            color_freyja="${success}${bold}ONLINE ${reset}"
+        else
+            color_freyja="${red}${bold}OFFLINE${reset}"
+        fi
+        
+        if [ "$status_vite" == "ONLINE " ]; then
+            color_vite="${success}${bold}ONLINE ${reset}"
+        else
+            color_vite="${red}${bold}OFFLINE${reset}"
+        fi
+        
+        if [ "$status_backend" == "ONLINE " ]; then
+            color_backend="${success}${bold}ONLINE ${reset}"
+        else
+            color_backend="${red}${bold}OFFLINE${reset}"
+        fi
+        
+        echo ""
+        echo -e "${border}┌──────────────────────┬──────────────────────────────────────────────────────────────────┐${reset}"
+        echo -e "${border}│${reset}  ${bg_primary}${bold} A ${reset}  ${bold}Aran${reset}           ${border}│${reset}  ${bold}[WORKBENCH - SERVICES STATUS]${reset}                                   ${border}│${reset}"
+        echo -e "${border}├──────────────────────┼──────────────────────────────────────────────────────────────────┤${reset}"
+        echo -e "${border}│${reset}  ${muted}Home                ${border}│${reset}  🎨 ${bold}Aran Stack Health Dashboard${reset}                              ${border}│${reset}"
+        echo -e "${border}│${reset}  ${muted}Projects            ${border}│${reset}                                                                  ${border}│${reset}"
+        echo -e "${border}│${reset}  ${muted}Repositories        ${border}│${reset}   • Frontend UI   : http://localhost:5173        [${color_vite}]         ${border}│${reset}"
+        echo -e "${border}│${reset}  ${muted}Datasets            ${border}│${reset}   • Backend API   : http://localhost:8081         [${color_backend}]         ${border}│${reset}"
+        echo -e "${border}│${reset}  ${muted}Alignments          ${border}│${reset}   • Data Lake API : http://localhost:8085        [${color_lake}]         ${border}│${reset}"
+        echo -e "${border}│${reset}  ${muted}Schema Versions     ${border}│${reset}   • FREYJA API    : http://localhost:8086              [${color_freyja}]         ${border}│${reset}"
+        echo -e "${border}│${reset}  ${primary}${bold}Query Workbench     ${border}│${reset}                                                                  ${border}│${reset}"
+        echo -e "${border}│${reset}  ${muted}Organizations       ${border}│${reset}  💡 Logs folder: Check *.log in the project root                 ${border}│${reset}"
+        echo -e "${border}└──────────────────────┴──────────────────────────────────────────────────────────────────┘${reset}"
+        echo ""
+        ;;
+    help|-h|--help)
+        show_help
+        ;;
+    *)
+        echo -e "${red}Error: Unknown command '$1'${reset}" >&2
+        show_help
+        exit 1
+        ;;
+esac

@@ -1,0 +1,42 @@
+### ============================================================
+###  Operator Invocation API — /api/operators/**
+###  Any authenticated tenant member may invoke operators.
+###  Run auth.http first to populate {{access_token}}.
+### ============================================================
+
+### List active operators
+GET {{baseUrl}}/api/operators
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Invoke an operation on the bootstrapping operator
+POST {{baseUrl}}/api/operators/bootstrapping/invoke
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "operation": "ping",
+  "parameters": {}
+}
+
+### Invoke an operation on the join-discovery operator
+POST {{baseUrl}}/api/operators/join-discovery/invoke
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "operation": "ping",
+  "parameters": {}
+}
+
+### 422 — operator that doesn't exist
+POST {{baseUrl}}/api/operators/nonexistent-operator/invoke
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "operation": "ping",
+  "parameters": {}
+}

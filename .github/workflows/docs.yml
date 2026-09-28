@@ -1,0 +1,144 @@
+name: Docs site
+
+# The gate: it fails the pull request when the site does not build, when a link
+# is dead, when a diagram does not render, or when the committed OpenAPI
+# snapshot no longer matches the service. On main it also publishes the site to
+# GitHub Pages (Settings → Pages → Source: GitHub Actions).
+on:
+  pull_request:
+    paths:
+      - 'docs-site/**'
+      - '.github/workflows/docs.yml'
+      # The API reference is generated from these, so a backend change can make
+      # the committed snapshot stale without touching docs-site at all. The two
+      # build files pin Spring Boot and springdoc: a version bump reshapes the
+      # spec too, and without them the drift would surface on the next unrelated
+      # backend pull request instead of on the bump.
+      - 'aran-application/src/main/**'
+      - 'aran-core/src/main/**'
+      - 'build.gradle'
+      - 'aran-application/build.gradle'
+  push:
+    branches: [main]
+    paths:
+      - 'docs-site/**'
+      - '.github/workflows/docs.yml'
+      - 'aran-application/src/main/**'
+      - 'aran-core/src/main/**'
+      - 'build.gradle'
+      - 'aran-application/build.gradle'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and link-check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - run: npm ci
+
+      # The diagram check drives a real browser: Mermaid runs client-side, so a
+      # broken diagram is invisible to both the build and the link checker.
+      - name: Install Chromium for the diagram check
+        run: npx playwright install --with-deps chromium
+
+      - name: Type-check the site config
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Check links
+        run: npm run check-links
+
+      - name: Check diagrams render
+        run: npm run check-diagrams
+
+  # The checks above run against a root-served build; Pages serves the site under
+  # /aran/, so the published build is a second one with that base.
+  deploy:
+    name: Publish to GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - run: npm ci
+
+      - name: Build for GitHub Pages
+        run: npm run build
+        env:
+          DOCS_BASE_URL: /aran/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-site/build
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  openapi:
+    name: OpenAPI snapshot is current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Captures /v3/api-docs from a real application context. Needs Docker for
+      # the Testcontainers PostgreSQL the context boots against; ubuntu-latest
+      # has one.
+      - name: Capture the spec from the service
+        run: ./gradlew :aran-application:test --tests '*OpenApiGenerationTest' --no-daemon
+
+      - name: Fail if the committed snapshot is stale
+        working-directory: docs-site
+        run: node scripts/openapi-sync.mjs --check
+
+      # Uploaded whether or not the check passed, so a stale-snapshot failure
+      # comes with the file that would fix it.
+      - name: Upload the generated spec
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi.json
+          path: aran-application/build/openapi.json
+          if-no-files-found: warn

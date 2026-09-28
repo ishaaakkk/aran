@@ -1,0 +1,6 @@
+PROJECT[title]
+  UNION[all=true, inputs=2]
+    FILTER[=(title, 'Guernica')]
+      SCAN[u_art1_Artworks]
+    FILTER[=(title, 'Guernica')]
+      SCAN[u_art2_Artworks]

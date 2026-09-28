@@ -1,0 +1,74 @@
+# gitleaks configuration for Aran.
+#
+# This repository contains credentials on purpose. They are development
+# sentinels: values published so that `make all` works on a clean checkout, and
+# so that the e2e suite can log in without a secret store. Every one of them is
+# also a value InsecureDefaultsGuard refuses to start on — that class and this
+# allowlist describe the same set from two ends, so if you add a sentinel, add
+# it in both places.
+#
+# The allowlist is deliberately written as exact values rather than as ignored
+# paths. Ignoring `keycloak/import/` would hide a real secret that someone later
+# pastes into the same file; ignoring the literal string "change-me" cannot.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "aran-dev-sentinel-reuse"
+description = """A development sentinel appears outside the files that are \
+allowed to carry it. These values are public; using one anywhere new means \
+something now depends on a published credential."""
+regex = '''(dev-shared-secret-change-in-prod|dev-backend-secret-change-in-prod|dev-freyja-secret-change-in-prod|standalone-secret-change-me)'''
+
+# The files allowed to carry a sentinel. Listed as an allowlist rather than a
+# negative-lookahead path: gitleaks compiles with Go's regexp, which has no
+# lookahead, and a config that fails to compile fails the scan outright.
+[[rules.allowlists]]
+paths = [
+  '''^aran-application/src/main/resources/application\.yml$''',
+  '''^aran-application/src/main/java/edu/upc/dtak/aran/app/config/InsecureDefaultsGuard\.java$''',
+  '''^aran-lake/src/aran_lake/config\.py$''',
+  '''^aran-lake/docker-compose\.yml$''',
+  '''^aran-lake/examples/''',
+  '''^compose\.standalone\.yml$''',
+  '''^docker/''',
+  '''^docs/''',
+  '''^\.gitleaks\.toml$''',
+]
+
+[allowlist]
+description = "Development sentinels, published on purpose"
+
+paths = [
+  # Keycloak's dev realm import: a fixed client secret and test-user passwords.
+  # The realm is rebuilt from this file on every local and e2e run.
+  '''keycloak/import/.*\.json''',
+  # The lake's example clients, which hardcode the dev bearer token so the
+  # snippets are copy-pasteable against a local stack.
+  '''aran-lake/examples/.*\.py''',
+  # Compose files and the e2e stack: dev defaults with ${VAR:-default} syntax.
+  '''docker/e2e/.*''',
+  # The lake's local Garage node: a fixed RPC secret for a single-node dev store.
+  '''aran-lake/docker/garage/garage\.toml''',
+  '''.*docker-compose.*\.ya?ml''',
+  '''compose\.standalone\.yml''',
+  # Test fixtures and seed data.
+  '''(^|/)src/test/''',
+  '''(^|/)tests/''',
+  '''.*/db/seed.*/.*\.sql''',
+  '''aran-web/e2e/.*''',
+]
+
+regexes = [
+  '''change-me''',
+  '''change-in-prod''',
+  '''standalone-secret-change-me''',
+  # The application.yml defaults, which are documented as DEV-ONLY and are
+  # exactly what InsecureDefaultsGuard refuses.
+  '''\$\{ARAN_[A-Z_]+:[^}]*\}''',
+  # The dev DB credential pair, which is `aran`/`aran` everywhere it appears.
+  '''POSTGRES_PASSWORD:-?aran''',
+  # TenantMemberService's temporary-password alphabet: high entropy, not a secret.
+  '''abcdefghijkmnpqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ23456789''',
+]

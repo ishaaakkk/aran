@@ -1,0 +1,19 @@
+### ============================================================
+###  Identity — GET /api/me
+###  Run auth.http first to populate {{access_token}}.
+### ============================================================
+
+### Who am I? Returns the local User + all tenant memberships.
+GET {{baseUrl}}/api/me
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Health probe (no auth required)
+GET {{baseUrl}}/actuator/health/readiness
+
+### OpenAPI spec (no auth required)
+GET {{baseUrl}}/v3/api-docs
+Accept: application/json
+
+### Swagger UI (open in browser)
+GET {{baseUrl}}/swagger-ui.html

@@ -1,0 +1,48 @@
+### ============================================================
+###  Jobs API — /api/jobs/**
+###  The async backbone: submit work, read its state, stream it.
+###  Run auth.http first to populate {{access_token}}.
+### ============================================================
+
+### Submit an operator invocation as a job.
+### Same body as /invoke; answers 202 with the job id. Copy it into {{jobId}} below.
+POST {{baseUrl}}/api/operators/schema-integration/submit
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "operation": "ping",
+  "parameters": {}
+}
+
+### Read one job. Reaches SUCCEEDED with the ping payload in `result`.
+### Another tenant's job id answers 404 — indistinguishable from one that does not exist.
+@jobId = replace-with-the-jobId-from-the-submit-above
+GET {{baseUrl}}/api/jobs/{{jobId}}
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### List recent jobs for this tenant, newest first (limit defaults to 20, caps at 100).
+GET {{baseUrl}}/api/jobs?limit=20
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### List recent jobs for one project.
+# GET {{baseUrl}}/api/jobs?projectId={{projectId}}&limit=20
+# Authorization: Bearer {{access_token}}
+
+### Stream a job's state changes (SSE).
+###
+### EventSource cannot set an Authorization header, so this one route also accepts
+### the token as ?access_token=. Most .http clients do not render an event stream —
+### use curl for this one, against a *freshly submitted* job so there is something
+### left to watch:
+###
+###   curl -N "http://localhost:8081/api/jobs/$JOB_ID/events?access_token=$TOKEN"
+###
+### It emits the current state immediately, one `job` event per change, and closes
+### the stream once the job is terminal.
+GET {{baseUrl}}/api/jobs/{{jobId}}/events
+Authorization: Bearer {{access_token}}
+Accept: text/event-stream

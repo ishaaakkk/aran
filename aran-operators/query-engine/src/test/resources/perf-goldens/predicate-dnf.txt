@@ -1,0 +1,6 @@
+PROJECT[key]
+  UNION[all=true, inputs=2]
+    FILTER[OR(AND(=(grp, 'g1'), >(amount, 10)), AND(=(grp, 'g2'), >(amount, 20)))]
+      SCAN[u_c0s0_C0]
+    FILTER[OR(AND(=(grp, 'g1'), >(amount, 10)), AND(=(grp, 'g2'), >(amount, 20)))]
+      SCAN[u_c0s1_C0]

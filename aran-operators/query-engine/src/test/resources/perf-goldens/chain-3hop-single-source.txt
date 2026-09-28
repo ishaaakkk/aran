@@ -1,0 +1,8 @@
+PROJECT[key, grp]
+  JOIN[inner, fk = key]
+    JOIN[inner, fk = key]
+      JOIN[inner, fk = key]
+        SCAN[u_c0s0_C0]
+        SCAN[u_c1s0_C1]
+      SCAN[u_c2s0_C2]
+    SCAN[u_c3s0_C3]

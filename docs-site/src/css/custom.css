@@ -1,0 +1,205 @@
+/**
+ * Aran documentation — theme.
+ *
+ * The palette is Aran's own, lifted from aran-web/src/index.css so the docs and
+ * the product look like the same thing. Token names there map onto Infima's here:
+ *
+ *   Aran            →  Infima
+ *   --primary       →  --ifm-color-primary
+ *   --background    →  --ifm-background-color
+ *   --card          →  --ifm-background-surface-color
+ *   --foreground    →  --ifm-font-color-base
+ *   --border        →  --ifm-toc-border-color / --ifm-color-emphasis-300
+ *   --muted         →  --ifm-code-background
+ *
+ * If aran-web's tokens change, change them here too — this file is a copy, and
+ * nothing detects drift between them.
+ *
+ * WANT TO RETHEME? Edit only the two token blocks below. Everything after them is
+ * expressed in terms of those variables, so a palette change is a two-block edit.
+ */
+
+/* ── Aran tokens: light ─────────────────────────────────────────────────────
+   aran-web calls this `.light`. Warm off-white ground, deep violet primary. */
+:root {
+  --aran-background: #f4f3ee;
+  --aran-card: #ffffff;
+  --aran-foreground: #15151b;
+  --aran-muted: #f8f7f2;
+  --aran-muted-foreground: #5c5c66;
+  --aran-border: #e8e5dc;
+  --aran-primary: #6d28d9;
+  --aran-accent: #d97706;
+  --aran-success: #1f8a5b;
+  --aran-warning: #a56e1a;
+  --aran-error: #b83a2f;
+
+  --ifm-color-primary: var(--aran-primary);
+  --ifm-color-primary-dark: #6225c3;
+  --ifm-color-primary-darker: #5c23b8;
+  --ifm-color-primary-darker-still: #4c1d99;
+  --ifm-color-primary-darkest: #451b8a;
+  --ifm-color-primary-light: #7b32ea;
+  --ifm-color-primary-lighter: #8340ec;
+  --ifm-color-primary-lightest: #9a63ef;
+
+  --ifm-background-color: var(--aran-background);
+  --ifm-background-surface-color: var(--aran-card);
+  --ifm-font-color-base: var(--aran-foreground);
+  --ifm-heading-color: var(--aran-foreground);
+  --ifm-toc-border-color: var(--aran-border);
+  --ifm-color-emphasis-200: var(--aran-border);
+  --ifm-color-emphasis-300: var(--aran-border);
+  --ifm-code-background: var(--aran-muted);
+  --ifm-navbar-background-color: var(--aran-card);
+  --ifm-footer-background-color: #1c1b22;
+  --ifm-blockquote-color: var(--aran-muted-foreground);
+
+  --docusaurus-highlighted-code-line-bg: rgba(109, 40, 217, 0.1);
+}
+
+/* ── Aran tokens: dark ──────────────────────────────────────────────────────
+   aran-web's `:root`. The product is dark-first, so this is its real identity. */
+[data-theme='dark'] {
+  --aran-background: #0c0c10;
+  --aran-card: #13131a;
+  --aran-foreground: #e8e8ee;
+  --aran-muted: #191921;
+  --aran-muted-foreground: #7e7e8a;
+  --aran-border: #22222b;
+  --aran-primary: #8b5cf6;
+  --aran-accent: #e8b339;
+  --aran-success: #3dcea0;
+  --aran-warning: #e8b339;
+  --aran-error: #e8736b;
+
+  --ifm-color-primary: var(--aran-primary);
+  --ifm-color-primary-dark: #7c45f4;
+  --ifm-color-primary-darker: #7439f4;
+  --ifm-color-primary-darkest: #5c14f0;
+  --ifm-color-primary-light: #9a73f8;
+  --ifm-color-primary-lighter: #a27ff9;
+  --ifm-color-primary-lightest: #bba3fb;
+
+  --ifm-background-color: var(--aran-background);
+  --ifm-background-surface-color: var(--aran-card);
+  --ifm-font-color-base: var(--aran-foreground);
+  --ifm-heading-color: var(--aran-foreground);
+  --ifm-toc-border-color: var(--aran-border);
+  --ifm-color-emphasis-200: var(--aran-border);
+  --ifm-color-emphasis-300: var(--aran-border);
+  --ifm-code-background: var(--aran-muted);
+  --ifm-navbar-background-color: var(--aran-card);
+  --ifm-footer-background-color: #08080b;
+  --ifm-blockquote-color: var(--aran-muted-foreground);
+
+  --docusaurus-highlighted-code-line-bg: rgba(139, 92, 246, 0.18);
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────
+   The same stacks aran-web declares. Neither the app nor this site ships the
+   font files, so both fall back to the system UI face where Inter and JetBrains
+   Mono are not installed — which is why the fallbacks are the real ones, not
+   decoration. Self-host both under static/fonts/ and add @font-face here if you
+   want the branded faces guaranteed. */
+:root {
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ifm-heading-font-weight: 650;
+  --ifm-code-font-size: 90%;
+  --ifm-code-border-radius: 0.375rem;
+  --ifm-global-radius: 0.5rem;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* aran-web's ambient corner washes. Subtle enough to read as texture rather than
+   decoration, and the reason the two surfaces feel related at a glance. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(at top right, rgba(124, 58, 237, 0.06) 0, transparent 50%),
+    radial-gradient(at bottom left, rgba(29, 78, 216, 0.06) 0, transparent 50%);
+}
+
+/* ── Chrome ─────────────────────────────────────────────────────────────────*/
+
+.navbar {
+  border-bottom: 1px solid var(--aran-border);
+  box-shadow: none;
+}
+
+.menu {
+  font-size: 0.9rem;
+}
+
+/* The active sidebar item is the one piece of chrome worth spending the brand
+   colour on — it answers "where am I" at a glance. */
+.menu__link--active:not(.menu__link--sublist) {
+  background: color-mix(in srgb, var(--aran-primary) 12%, transparent);
+  font-weight: 600;
+}
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--aran-border) !important;
+}
+
+article code {
+  border: 1px solid var(--aran-border);
+}
+
+.markdown h2 {
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--aran-border);
+}
+
+/* Admonitions inherit Aran's semantic colours rather than Infima's defaults, so
+   a warning here is the same yellow as a warning in the product. */
+.theme-admonition-warning { --ifm-alert-background-color: color-mix(in srgb, var(--aran-warning) 12%, transparent); --ifm-alert-border-color: var(--aran-warning); }
+.theme-admonition-danger  { --ifm-alert-background-color: color-mix(in srgb, var(--aran-error) 12%, transparent);   --ifm-alert-border-color: var(--aran-error); }
+.theme-admonition-tip     { --ifm-alert-background-color: color-mix(in srgb, var(--aran-success) 12%, transparent); --ifm-alert-border-color: var(--aran-success); }
+.theme-admonition-info,
+.theme-admonition-note    { --ifm-alert-background-color: color-mix(in srgb, var(--aran-primary) 10%, transparent); --ifm-alert-border-color: var(--aran-primary); }
+
+::selection {
+  background-color: var(--aran-primary);
+  color: #fff;
+}
+
+/* aran-web's thin scrollbars. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--aran-border); border-radius: 9999px; }
+
+/* ── Wide content ───────────────────────────────────────────────────────────*/
+
+/* Mermaid renders at its natural size (useMaxWidth is off in the site config),
+   so a wide diagram scrolls inside its own box rather than being shrunk to
+   illegibility or forcing the whole page to scroll sideways. */
+.docusaurus-mermaid-container {
+  overflow-x: auto;
+  text-align: center;
+}
+
+/* theme-mermaid ships `.container > svg { max-width: 100% }`, which undoes the
+   natural sizing and shrinks the diagram again. Override it so the scroll box
+   above is what actually handles overflow. */
+.docusaurus-mermaid-container > svg {
+  max-width: none;
+}
+
+/* Reference tables here are frequently wider than the content column (endpoint
+   tables, configuration keys). Same rule: scroll the table, not the page. */
+.markdown table {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}

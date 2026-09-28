@@ -1,0 +1,73 @@
+// ===========================================================================
+//  bootstrapping operator
+//  Generates a graph-based RDFS representation of a tabular/semi-structured
+//  data source (CSV, JSON). Stores the result in Fuseki at urn:aran:source:{datasetId}.
+//
+//  Approach: follows the schema-extraction logic from
+//    Flores et al. "Incremental schema integration for data wrangling via
+//    knowledge graphs" (Semantic Web 15, 2024). We skip the intermediate
+//    source-specific metamodel and emit the canonical RDFS graph directly,
+//    which matches the production-rule output and keeps the code small.
+// ===========================================================================
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // The connector conformance kit. Every SourceConnector in this module extends it.
+    testImplementation testFixtures(project(':aran-core'))
+    implementation project(':aran-core')
+    implementation 'org.jspecify:jspecify'
+
+    // Jackson for JSON parsing (already on classpath via core, declared
+    // explicitly because we use it directly here).
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // Apache Commons CSV — RFC 4180 with quoted-field support.
+    implementation 'org.apache.commons:commons-csv:1.14.1'
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.slf4j:slf4j-api'
+
+    // DuckDB — ParquetBootstrap introspects parquet snapshots via
+    // DESCRIBE read_parquet(...). Version pinned once in the root build.
+    implementation "org.duckdb:duckdb_jdbc:${duckdbJdbcVersion}"
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.16.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // ObjectStorageConnectorGarageTest/DuckDbObjectStorageExtractorGarageTest (docker-tagged): the
+    // connector reads an s3:// object over httpfs, so its only faithful test needs a live
+    // S3-compatible store — aran-core's GarageContainer fixture (above). The MinIO SDK stays only as
+    // the plain S3 client that uploads the objects under test.
+    testImplementation 'io.minio:minio:8.5.17'
+
+    // RelationalCatalogHarvestServiceTest (docker-tagged): pg_class/pg_stats/information_schema
+    // only exist on a real PostgreSQL, so its only faithful test needs a live one. Driver version
+    // matches JdbcDriverRegistry's pinned production coordinates, not just "any recent version".
+    testImplementation 'org.testcontainers:postgresql:1.21.4'
+    testImplementation 'org.postgresql:postgresql:42.7.5'
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        // `-PexcludeTags=docker` drops the Garage-backed integration tests, which is what
+        // validate.sh --offline passes so this module's remaining tests run without a Docker
+        // daemon. Unset in a normal build/CI, so everything runs there.
+        if (project.hasProperty('excludeTags')) {
+            excludeTags project.property('excludeTags').split(',')
+        }
+    }
+
+    // ShippedJsonFixturesBootstrapTest bootstraps the JSON files people are handed — the seminar
+    // demo and the e2e corpus — straight out of those directories. Undeclared, an edit to one of
+    // them alone leaves this task UP-TO-DATE on a verdict about the old file (the S4-2 shape sat
+    // in semantic_papers.json for weeks). Top-level *.json only: that is what the test lists.
+    inputs.files(['demo/seminar', 'aran-web/e2e/data'].collect { dir ->
+        fileTree(rootProject.file(dir)) { include '*.json' }
+    }).withPropertyName('shippedJsonFixtures')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+

@@ -1,0 +1,113 @@
+// ===========================================================================
+//  aran-adapter-persistence
+//  Outbound/driven adapter: implements the persistence-facing SPI ports
+//  declared by aran-core, backed by Spring Data JPA / Hibernate 7.
+//
+//  Depends on aran-core (to see the port interfaces) but is itself swappable —
+//  the application module wires it in via runtimeOnly, so the core never
+//  hard-references this implementation.
+// ===========================================================================
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' // Inherits 4.0.6 from root
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    implementation project(':aran-core')
+
+    // Lombok for eliminating JPA entity boilerplate
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+    implementation 'org.springframework.boot:spring-boot-persistence'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+
+    // Needed for the @AutoConfiguration annotation — the adapter registers
+    // itself as a Boot auto-configuration since it is wired in as runtimeOnly
+    // and the application never references its config class by type.
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // The adapter references the Hibernate Session API directly to enable the
+    // tenant @Filter per request. spring-boot-starter-data-jpa already brings
+    // hibernate-core transitively; declaring it keeps the dependency explicit.
+    implementation 'org.hibernate.orm:hibernate-core'
+
+
+    // --- Schema management (Flyway) ---
+    // Flyway owns the database schema: versioned SQL in db/migration, applied
+    // automatically on application startup. This is the industry-standard
+    // alternative to letting Hibernate generate the schema (ddl-auto), which
+    // is why application.yml keeps ddl-auto at 'validate' — Hibernate only
+    // checks the schema Flyway produced, it never creates it.
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    // Spring Boot 4 split Flyway auto-configuration into a separate module.
+    // Without this, FlywayAutoConfiguration is absent from the spring.factories
+    // and Flyway never runs before Hibernate's schema validation.
+    implementation 'org.springframework.boot:spring-boot-flyway'
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    implementation 'org.jspecify:jspecify'
+
+    // Fuseki's RDFConnection, which only this adapter uses. jena-arq itself arrives through
+    // aran-core's `api`, at the one version the root build pins.
+    implementation "org.apache.jena:jena-rdfconnection:${jenaVersion}"
+
+    // KeycloakAdminAdapterIT (docker-tagged) drives the adapter against a real Keycloak booted
+    // from the dev realm: what a stub server cannot say is whether Keycloak really honours the
+    // partial PUT that disables and re-enables an account without clearing its profile.
+    testImplementation 'org.testcontainers:testcontainers'
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        // `-PexcludeTags=docker` drops the Keycloak-backed IT, which is what validate.sh
+        // --offline passes; unset in a normal build, so everything runs there.
+        if (project.hasProperty('excludeTags')) {
+            excludeTags project.property('excludeTags').split(',')
+        }
+    }
+}
+
+bootJar { enabled = false }
+jar { enabled = true }
+
+// ---------------------------------------------------------------------------
+//  MIGRATIONS-8 — keep the development seeds out of the production artifact
+// ---------------------------------------------------------------------------
+//  db/seed (dev) and db/seed-e2e (e2e) are fixture data: demo tenants, their
+//  users, and the passwords those users log in with — all published in this
+//  repository. Two comments claimed the directories were "absent from the
+//  production classpath". They were not: both shipped inside this jar, and so
+//  inside every bootJar built from it. Excluding them here makes the claim true.
+//
+//  They still have to reach a Gradle-launched dev or e2e stack, and Gradle
+//  resolves this project through the JAR rather than through build/resources/main
+//  (verified: aran-application's runtimeClasspath names the jar). So the same
+//  files are staged into a seeds-ONLY classpath root, which aran-application adds
+//  to bootRun and test. Seeds-only is the load-bearing part: putting
+//  build/resources/main on the classpath instead would place a second copy of
+//  every db/migration file there, and Flyway refuses to start when two migrations
+//  carry the same version.
+//
+//  An IDE run configuration, which uses module output directories rather than the
+//  jar, keeps seeing the seeds from src/main/resources and is unaffected.
+jar {
+    exclude 'db/seed/**'
+    exclude 'db/seed-e2e/**'
+}
+
+tasks.register('seedClasspath', Copy) {
+    description = 'Stages the dev/e2e Flyway seeds into a classpath root of their own.'
+    from('src/main/resources') {
+        include 'db/seed/**'
+        include 'db/seed-e2e/**'
+    }
+    into layout.buildDirectory.dir('seed-classpath')
+}

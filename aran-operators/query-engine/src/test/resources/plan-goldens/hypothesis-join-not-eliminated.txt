@@ -1,0 +1,4 @@
+PROJECT[title]
+  JOIN[inner, id = artist_id]
+    SCAN[u_artist_IArtist]
+    SCAN[u_art_Artworks]

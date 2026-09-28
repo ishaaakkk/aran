@@ -1,0 +1,30 @@
+// ===========================================================================
+//  aran-adapter-license-token
+//  Self-hosted licensing adapter. Validates a JWT-shaped license token signed
+//  with the vendor's private key against the public key shipped/configured
+//  with the deployment. Provides {@link edu.upc.dtak.aran.core.licensing.LicenseProvider}
+//  ONLY — there is no LicenseAdminPort here, because customer-running
+//  instances are not the license-issuance authority.
+//
+//  Wired in only when running with `aran.licensing.mode=signed-token`. Cloud
+//  deployments do not include it.
+// ===========================================================================
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':aran-core')
+
+    // Boot autoconfigure for the @AutoConfiguration / @ConditionalOnProperty
+    // annotations the adapter uses to self-register.
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // Reuse Spring Security 7's JWT support — already on the classpath in the
+    // application module for OAuth2 resource server. Same library, different
+    // usage: here we validate a license token issued by the vendor, not an
+    // identity token issued by Keycloak.
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+
+    implementation 'org.jspecify:jspecify'
+}

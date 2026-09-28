@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Path aliases */
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    /* Linting */
+    // `strict` was absent — therefore off — for all of src/, while tsconfig.e2e.json
+    // sets it: the app was type-checked more loosely than the tests that drive it.
+    // Turning it on produced ZERO errors, because the codebase already avoids `any`
+    // by hand (0 occurrences in src/). The discipline was there; the enforcement
+    // wasn't, so nothing kept it there.
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+    // Not enabled: noUncheckedIndexedAccess — 142 errors, a real piece of work
+    // rather than a flip. Recorded so the number is known.
+  },
+  "include": ["src"]
+}

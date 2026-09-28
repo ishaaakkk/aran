@@ -1,0 +1,32 @@
+// build.gradle pins the toolchain to JDK 25 and no toolchain download repository was
+// configured, so Gradle could only fail — "No matching toolchains found" — on any host
+// whose JDK is older, which is every fresh CI container and remote sandbox. This resolver
+// lets Gradle fetch JDK 25 itself instead. Do NOT "fix" that failure by lowering
+// languageVersion: ScopedValue (TenantContextHolder) is final in 25 and preview in 21, and
+// --enable-preview classfiles refuse to run without the flag at runtime too.
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'aran'
+
+// --- Core platform ---
+include 'aran-core'
+include 'aran-application'
+
+// --- Adapters (driven/outbound) ---
+include 'aran-adapters:aran-adapter-persistence'
+include 'aran-adapters:aran-adapter-license-token'
+include 'aran-adapters:aran-adapter-iceberg'
+
+// --- Platform Operators (Spring-managed components) ---
+include 'aran-operators:bootstrapping'
+include 'aran-operators:join-discovery'
+include 'aran-operators:profiling'
+include 'aran-operators:schema-integration'
+include 'aran-operators:constraint-discovery'
+include 'aran-operators:query-engine'
+
+// Gradle 9+ ships with Spring Boot 4 support out of the box.
+// No pluginManagement block required for the spring-boot plugin version
+// as long as it is declared in the root build.gradle plugins block.

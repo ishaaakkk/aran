@@ -1,0 +1,60 @@
+### ============================================================
+###  API tokens — programmatic access without a browser login.
+###
+###  Everything else in this directory depends on auth.http's
+###  Resource Owner Password Credentials grant, which that file
+###  itself marks dev-only: it is deprecated in OAuth 2.1, needs
+###  the user's real password, and is disabled by default in a
+###  production Keycloak. A token is the supported alternative.
+###
+###  Create one here (or in the UI: user menu → API Tokens), then
+###  use it as {{api_token}} anywhere {{access_token}} appears.
+### ============================================================
+
+### Create a read-only token. The response is the ONLY place the
+### secret ever appears — the server stores a hash.
+# @name createToken
+POST {{baseUrl}}/api/tokens
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "name": "http-client",
+  "scope": "READ",
+  "expiryDays": 90
+}
+
+> {%
+  client.global.set("api_token", response.body.secret);
+  client.log("Token stored as {{api_token}} — prefix " + response.body.token.prefix);
+%}
+
+### List your tokens (never includes secrets)
+GET {{baseUrl}}/api/tokens
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Use the token instead of a JWT — export a full query result,
+### uncapped, as CSV. This is the endpoint a notebook wants.
+POST {{baseUrl}}/api/query/export
+Authorization: Bearer {{api_token}}
+Content-Type: application/json
+
+{
+  "oql": "SELECT Paper.title FROM Paper",
+  "format": "csv"
+}
+
+### A READ token is refused on anything that changes state (403)
+POST {{baseUrl}}/api/projects
+Authorization: Bearer {{api_token}}
+Content-Type: application/json
+
+{
+  "name": "should-be-refused",
+  "description": "a read-only token must not be able to create this"
+}
+
+### Revoke — irreversible, effective immediately
+DELETE {{baseUrl}}/api/tokens/{{token_id}}
+Authorization: Bearer {{access_token}}

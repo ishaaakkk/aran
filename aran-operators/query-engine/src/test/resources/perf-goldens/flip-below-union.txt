@@ -1,0 +1,8 @@
+PROJECT[factText, dimName]
+  UNION[all=true, inputs=2]
+    JOIN[inner, dimKey = factKey]
+      SCAN[u_dim0_Dim]
+      SCAN[u_fact_Fact]
+    JOIN[inner, dimKey = factKey]
+      SCAN[u_dim1_Dim]
+      SCAN[u_fact_Fact]

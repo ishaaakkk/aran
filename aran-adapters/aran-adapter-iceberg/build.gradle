@@ -1,0 +1,50 @@
+// ===========================================================================
+//  aran-adapter-iceberg
+//  Outbound/driven adapter for Apache Iceberg interoperability (Gap 2):
+//
+//    - HttpIcebergCatalogClient — implements the core's IcebergCatalogClient
+//      port over plain java.net.http + Jackson (the CONSUME half's control
+//      plane: config / list tables / load table against any Iceberg REST
+//      catalog).
+//    - IcebergProductTable — turns one MATERIALIZED data product's parquet
+//      snapshot into spec-conformant Iceberg table metadata (metadata.json +
+//      manifest list + manifest, written by iceberg-core's own commit
+//      machinery, never hand-rolled Avro) for the PRODUCE half's read-only
+//      REST catalog in aran-application.
+//
+//  This is the ONLY module whose main code depends on iceberg-core (aran-application's
+//  tests use it as a client, to read the produce surface back). The dependency
+//  is heavy (Avro, caffeine, roaring bitmaps) and the rest of the codebase
+//  must keep speaking in core types.
+// ===========================================================================
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' // Inherits version from root
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    implementation project(':aran-core')
+
+    // implementation, not api: no public signature here exposes an iceberg type
+    // (IcebergProductTable speaks ProductColumn/String/byte[]), so a consumer compiling against
+    // iceberg-core would be depending on this module's internals — the confinement above, made
+    // a compile error instead of a convention.
+    implementation "org.apache.iceberg:iceberg-core:${icebergVersion}"
+    implementation "org.apache.iceberg:iceberg-api:${icebergVersion}"
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springframework:spring-context'
+    // Registers the client bean via auto-configuration, like aran-adapter-persistence:
+    // aran-application wires this module runtime-only for the client, and by type for
+    // the produce-side generator.
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.jspecify:jspecify'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // PyIcebergFixtureGeneratorTest writes the parquet the way a product snapshot is written.
+    testImplementation "org.duckdb:duckdb_jdbc:${duckdbJdbcVersion}"
+}
+
+bootJar { enabled = false }
+jar { enabled = true }

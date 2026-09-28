@@ -1,0 +1,39 @@
+# Git
+.git/
+.gitignore
+
+# Build outputs — the builder stage regenerates these
+**/build/
+**/.gradle/
+
+# Frontend build artefacts — the SPA is deployed separately
+aran-web/node_modules/
+aran-web/dist/
+
+# Local environments and tool directories. None of them is an input to any image, and together
+# they are gigabytes: every Python tree keeps its own .venv, docs-site its own node_modules, and
+# a tool's worktrees hold whole checkouts — whose build.gradle files the builder's script-
+# gathering stage would otherwise pick up as well. No image copies a dot-directory.
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+.*/
+# The dev stack's pid files (scripts/startup.sh), which change on every start.
+.run/
+
+# IDE
+.idea/
+*.iml
+**/.DS_Store
+
+# Test and dev config
+**/*Test.java
+**/*IT.java
+.env
+.env.*
+!.env.example
+
+# S3 Lake Service
+aran-lake/

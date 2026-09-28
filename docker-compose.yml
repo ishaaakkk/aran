@@ -1,0 +1,171 @@
+# ===========================================================================
+#  Aran — full-stack docker-compose
+#
+#  This file is DEPENDENCIES ONLY — it does not, and is not meant to, run Aran
+#  itself. For a containerised Aran use compose.standalone.yml, which is the
+#  supported one-file topology.
+#
+#  It used to carry a `full` profile with an aran-app service, deleted 2026-08-27
+#  (audit CLIENTS-4) because it had never once worked: nothing here overrode
+#  ARAN_LAKE_URL / ARAN_FREYJA_URL / ARAN_FUSEKI_URL, so the containerised app
+#  dialled `localhost` for each of them from inside its own network namespace —
+#  and this file has no lake service to reach in the first place. compose.standalone.yml
+#  says as much in its own header. A profile that cannot start is worse than no
+#  profile: it reads as a supported path.
+#
+#  Profiles:
+#    (default)   — deps only (postgres + keycloak + fuseki). Run the app with
+#                  ./gradlew :aran-application:bootRun for fast dev loops.
+#    demo        — adds the seminar source database.
+#    observability — adds an OTLP collector + Prometheus.
+#                  See docker/observability/ for Grafana dashboards.
+#
+#  Usage:
+#    docker compose up -d                        # deps only (dev mode)
+#    docker compose --profile demo up -d          # + demo source DB
+#    docker compose --profile observability up -d # + OTLP stack
+#    docker compose down                         # stop
+#    docker compose down -v                      # stop + wipe volumes
+#
+#  ⚠ DEV-ONLY CREDENTIALS — see the warning block at the top of the
+#    previous compose file. Everything here is for localhost only.
+# ===========================================================================
+services:
+
+  # --------------------------------------------------------------------------
+  #  Infrastructure dependencies (always started)
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:17
+    container_name: aran-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aran
+      POSTGRES_USER: aran
+      # ⚠ DEV-ONLY — override via POSTGRES_PASSWORD env var in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aran}
+    ports:
+      - "5432:5432"
+    volumes:
+      - aran-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aran -d aran"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --------------------------------------------------------------------------
+  #  Demo relational sources (profile: demo)
+  #
+  #  Two schemas standing for two independent institutional systems, to be
+  #  registered in Aran as two repositories alongside the CSV/JSON fixtures in
+  #  demo/seminar/. Separate from aran-postgres on purpose: that one holds
+  #  Aran's own metadata, and a demo that registers Aran's control database as
+  #  a user data source teaches exactly the wrong thing.
+  #
+  #  Behind a profile so `docker compose up -d` stays deps-only.
+  #     docker compose --profile demo up -d
+  #  See demo/seminar/source-db/README.md for the values to paste into the
+  #  repository registration form.
+  # --------------------------------------------------------------------------
+  demo-sources:
+    image: postgres:17
+    container_name: aran-demo-sources
+    profiles: ["demo"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: demo_sources
+      POSTGRES_USER: demo
+      # ⚠ DEV-ONLY. Aran should be pointed at the read-only aran_reader role
+      # created by init.sql, not at this owner account.
+      POSTGRES_PASSWORD: ${DEMO_SOURCES_PASSWORD:-demo}
+    ports:
+      # 5434, not 5433: aran-postgres holds 5432 and the LAKE's own Postgres
+      # publishes 5433 (aran-lake/docker-compose.yml), which `./aran start` brings
+      # up — so a demo-sources on 5433 could not run beside the stack it is meant
+      # to demo. The e2e stack owns the 554xx range.
+      - "5434:5432"
+    volumes:
+      - ./demo/seminar/source-db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - aran-demo-sources-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d demo_sources"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    container_name: aran-keycloak
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      # ⚠ DEV-ONLY — override via KC_BOOTSTRAP_ADMIN_PASSWORD in production
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import
+      # The Aran login theme. Mounted rather than baked into an image so it can be
+      # edited without a rebuild; the realm selects it via loginTheme: aran.
+      - ./keycloak/themes:/opt/keycloak/themes
+    healthcheck:
+      test: ["CMD-SHELL",
+             "exec 3<>/dev/tcp/localhost/9000 && \
+              printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && \
+              cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  fuseki:
+    # Pin to a specific release — never use :latest in any environment.
+    image: stain/jena-fuseki:5.1.0
+    container_name: aran-fuseki
+    restart: unless-stopped
+    ports:
+      - "3030:3030"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+    volumes:
+      - aran-fuseki-data:/fuseki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3030/$$/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  # --------------------------------------------------------------------------
+  #  Observability stack (profile: observability)
+  # --------------------------------------------------------------------------
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    container_name: aran-otel
+    profiles: [observability]
+    volumes:
+      - ./docker/observability/otel-collector.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4318:4318"   # OTLP HTTP
+      - "4317:4317"   # OTLP gRPC
+    depends_on: []
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: aran-prometheus
+    profiles: [observability]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./docker/observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+volumes:
+  aran-postgres-data:
+  aran-fuseki-data:
+  aran-demo-sources-data:

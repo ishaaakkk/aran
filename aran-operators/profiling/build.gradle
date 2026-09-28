@@ -1,0 +1,14 @@
+// ===========================================================================
+//  profiling operator
+//  Responsible for profiling datasets snapshot using the FREYJA service.
+//  Depends directly on aran-core to implement its core Operator bean.
+// ===========================================================================
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':aran-core')
+    implementation 'org.jspecify:jspecify'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}

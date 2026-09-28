@@ -1,0 +1,4 @@
+AGGREGATE[group=[name], aggs=1]
+  JOIN[inner, artist_id = id]
+    SCAN[u_art_Artworks]
+    SCAN[u_artist_IArtist]

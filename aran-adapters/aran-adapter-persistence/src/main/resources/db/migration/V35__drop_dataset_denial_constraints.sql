@@ -1,0 +1,20 @@
+-- Drop dataset.denial_constraints.
+--
+-- The column held the denial constraints a row-level LIMA discovery modal in the datasets list
+-- saved. Nothing ever read them: the query engine compiles enforced model_constraint rows into
+-- the u_/int_ views (QueryEngineOperator.enforcedByClass), keyed by INTEGRATED class IRI, and no
+-- code path anywhere consulted this column. A user who ran that modal was told "Successfully
+-- stored N denial constraints" and got no enforcement whatsoever — a lie the product told once
+-- per click.
+--
+-- Denial constraints also belong to an integrated class, not to a dataset: a dataset can feed
+-- several classes, and the DDL an enforced constraint becomes is written per int_ view. That is
+-- the shape model_constraint already has (V32 gave it origin=DISCOVERED for exactly the
+-- candidates the wired Constraints-tab flow produces), so there was nothing here to migrate
+-- into it — the two surfaces never agreed on a subject to migrate by.
+--
+-- Same precedent as V27__drop_dataset_wrapper.sql: written by a UI nothing wired to the engine,
+-- read by nothing, dropped pre-release rather than kept as a compatibility surface. Not
+-- reversible, and the data is not recoverable after this runs, which is acceptable precisely
+-- because nothing read it; the constraints that matter live in model_constraint, untouched here.
+ALTER TABLE dataset DROP COLUMN IF EXISTS denial_constraints;

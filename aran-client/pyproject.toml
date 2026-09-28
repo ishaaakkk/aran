@@ -1,0 +1,54 @@
+[project]
+name = "aran-client"
+version = "0.1.0"
+description = "Python client for Aran — run OQL, get a DataFrame"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Aran / DTAK group, UPC Barcelona" },
+]
+# The SPDX string form (PEP 639, `license = "Apache-2.0"`) needs setuptools>=77;
+# the build requirement below is >=68, so the table form stays until that moves.
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database :: Front-Ends",
+]
+
+# Deliberately thin. pyarrow is not optional: it is how the parquet the server
+# streams becomes a DataFrame, and it is the one dependency both pandas and
+# polars users need. Neither DataFrame library is a hard dependency — the caller
+# picks one, and `into=` fails with an install hint if it is missing.
+dependencies = [
+    "httpx>=0.27.0,<1.0.0",
+    "pyarrow>=17.0.0",
+]
+
+[project.optional-dependencies]
+pandas = ["pandas>=2.0.0"]
+polars = ["polars>=1.0.0"]
+# anywidget rather than a custom ipywidget: Colab blocks the nbextension/labextension
+# mechanism entirely, so a conventional widget does not load there at all.
+notebook = ["anywidget>=0.9.0"]
+dev = [
+    "pytest>=8.3.0",
+    "pandas>=2.0.0",
+    "polars>=1.0.0",
+    "anywidget>=0.9.0",
+    # Test-only: tests/test_iceberg_readback.py reads Aran's generated Iceberg metadata with a
+    # second, independent implementation. Not a client feature — see that test's docstring.
+    "pyiceberg>=0.12.0,<0.13.0; python_version >= '3.10'",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["aran_client*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

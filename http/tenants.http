@@ -1,0 +1,59 @@
+### ============================================================
+###  Tenant Owner API — /api/tenants/{id}/*
+###  Caller must be a tenant OWNER for add-member and leave.
+###  Any tenant member can read the license.
+###  Run auth.http first to populate {{access_token}}.
+### ============================================================
+
+### Get active license + current usage vs. limits
+GET {{baseUrl}}/api/tenants/{{tenantId}}/license
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+### Add a member to the tenant (OWNER only)
+###   The user must have signed in at least once (JIT provisioning).
+###   Replace the subject with the user's Keycloak subject UUID.
+POST {{baseUrl}}/api/tenants/{{tenantId}}/members
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "subject": "REPLACE_WITH_KEYCLOAK_SUBJECT_UUID",
+  "role": "MEMBER"
+}
+
+### Add a member as OWNER role
+POST {{baseUrl}}/api/tenants/{{tenantId}}/members
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "subject": "REPLACE_WITH_KEYCLOAK_SUBJECT_UUID",
+  "role": "OWNER"
+}
+
+### Leave the current tenant (any member — but refuses if you're the last OWNER)
+DELETE {{baseUrl}}/api/tenants/{{tenantId}}/membership/me
+Authorization: Bearer {{access_token}}
+
+### ── License limit demo ──────────────────────────────────────
+###  The dev seed gives alice a FREE plan (5 users / 3 projects).
+###  Add 5 members then try a 6th to see the 402 response.
+
+### 402 — add a 6th member when FREE plan allows 5
+###   (Run addMember 5 times first, then this one returns 402)
+POST {{baseUrl}}/api/tenants/{{tenantId}}/members
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "subject": "REPLACE_WITH_6TH_USER_SUBJECT",
+  "role": "MEMBER"
+}
+
+### 403 — URL tenant doesn't match JWT tenant
+GET {{baseUrl}}/api/tenants/00000000-0000-0000-0000-000000000099/license
+Authorization: Bearer {{access_token}}
+Accept: application/json

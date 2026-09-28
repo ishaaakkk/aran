@@ -1,0 +1,136 @@
+/*
+ * Aran login page.
+ *
+ * The palette is copied from aran-web/src/index.css (:root — the dark theme the app
+ * defaults to). Copied rather than imported because Keycloak serves this stylesheet from
+ * its own origin and cannot reach the SPA's build output; if the app's brand colours
+ * change, this file is the second place to change them.
+ *
+ * Scope is deliberately narrow: colour, type and spacing over Keycloak's own markup. No
+ * layout rewrites and no selectors that assume a particular field order, so an upgrade
+ * that reshuffles the template degrades to "slightly off" rather than "broken".
+ */
+
+:root {
+  --aran-background: #0C0C10;
+  --aran-foreground: #E8E8EE;
+  --aran-card: #13131A;
+  --aran-muted: #191921;
+  --aran-muted-foreground: #7E7E8A;
+  --aran-border: #22222B;
+  --aran-input: #2D2D38;
+  --aran-primary: #8B5CF6;
+  --aran-primary-hover: #7C3AED;
+  --aran-primary-foreground: #FFFFFF;
+  --aran-error: #E8736B;
+  --aran-radius: 10px;
+}
+
+html,
+body,
+body.login-pf,
+.login-pf body {
+  background: var(--aran-background) !important;
+  color: var(--aran-foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Keycloak paints a background image on this element in several of its themes. */
+.login-pf-page,
+.login-pf-body {
+  background-image: none !important;
+}
+
+.card-pf,
+.login-pf-page .card-pf,
+.pf-v5-c-login__main {
+  background: var(--aran-card);
+  border: 1px solid var(--aran-border);
+  border-radius: var(--aran-radius);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 45%);
+  padding: 2rem;
+}
+
+#kc-header,
+#kc-header-wrapper,
+.login-pf-header h1 {
+  color: var(--aran-foreground);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Labels and helper text */
+label,
+.pf-v5-c-form__label-text,
+#kc-form-options,
+.login-pf-settings {
+  color: var(--aran-muted-foreground);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+.pf-v5-c-form-control {
+  background: var(--aran-muted) !important;
+  border: 1px solid var(--aran-input) !important;
+  border-radius: 8px;
+  color: var(--aran-foreground) !important;
+  padding: 0.65rem 0.8rem;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+.pf-v5-c-form-control:focus {
+  border-color: var(--aran-primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(139 92 246 / 25%);
+}
+
+input[type="submit"],
+button[type="submit"],
+.pf-v5-c-button.pf-m-primary,
+.btn-primary {
+  background: var(--aran-primary) !important;
+  border: none !important;
+  border-radius: 8px;
+  color: var(--aran-primary-foreground) !important;
+  font-weight: 600;
+  padding: 0.7rem 1rem;
+  width: 100%;
+}
+
+input[type="submit"]:hover,
+button[type="submit"]:hover,
+.pf-v5-c-button.pf-m-primary:hover,
+.btn-primary:hover {
+  background: var(--aran-primary-hover) !important;
+}
+
+a {
+  color: var(--aran-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Errors keep Keycloak's semantics; only the colour is ours. */
+.alert-error,
+.pf-v5-c-alert.pf-m-danger,
+#input-error,
+.kc-feedback-text {
+  color: var(--aran-error);
+}
+
+/*
+ * Keycloak's own branding. Hidden rather than deleted: the markup still exists, so
+ * nothing in the template breaks, and an upgrade that renames the class degrades to
+ * showing a logo rather than to a broken page.
+ */
+#kc-info-wrapper .kc-social-provider-logo,
+.login-pf-brand {
+  display: none;
+}

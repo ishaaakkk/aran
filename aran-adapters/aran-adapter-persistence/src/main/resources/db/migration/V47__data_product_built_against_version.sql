@@ -1,0 +1,13 @@
+-- UI-OD12: a MATERIALIZED data product records the schema version its
+-- last successful build was planned against — provenance, not an executable pin.
+--
+-- schema_version_id is the version the product was DEFINED against and never moves; a refresh
+-- runs the OQL under whatever version is ACTIVE at the time. So after v3 is promoted and the
+-- product refreshed, its rows mean v3 while schema_version_id still says v2 — the UI read
+-- "pinned: schema v2" over rows built under v3 (audit J6-F1). This column is what the rows mean.
+--
+-- Nullable, no backfill: a product built before this column existed has no recorded build
+-- version, and inferring one from promote timestamps would be a guess presented as a record.
+-- NULL also stays the value for a VIRTUAL product (it has no build) and for one never built.
+-- No FK, on schema_version_id's precedent: version rows are history, never deleted.
+ALTER TABLE data_product ADD COLUMN built_against_version_id UUID;

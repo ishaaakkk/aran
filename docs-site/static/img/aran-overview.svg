@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 330" width="960" height="330" role="img" aria-label="Sources such as files, databases, object storage, Iceberg catalogs and Singer taps flow into Aran, which derives a schema per source, profiles and proposes joins, aligns them into one vocabulary and versions it. The result is read from a query workbench, JDBC, REST, MCP and data products.">
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #211E19; }
+    .label { font-size: 11px; letter-spacing: 1.4px; fill: #6F6759; font-weight: 600; }
+    .pill { font-size: 13px; }
+    .step { font-size: 14px; }
+    .num { font-size: 11px; fill: #fff; font-weight: 700; }
+  </style>
+  <rect width="960" height="330" rx="16" fill="#F8F6F1"/>
+
+  <g fill="none" stroke="#B9A2F8" stroke-width="2">
+    <path d="M240 86 C 290 86, 290 190, 330 190"/>
+    <path d="M240 134 C 290 134, 290 190, 330 190"/>
+    <path d="M240 182 C 290 182, 290 190, 330 190"/>
+    <path d="M240 230 C 290 230, 290 190, 330 190"/>
+    <path d="M240 278 C 290 278, 290 190, 330 190"/>
+    <path d="M630 190 C 670 190, 670 86, 720 86"/>
+    <path d="M630 190 C 670 190, 670 134, 720 134"/>
+    <path d="M630 190 C 670 190, 670 182, 720 182"/>
+    <path d="M630 190 C 670 190, 670 230, 720 230"/>
+    <path d="M630 190 C 670 190, 670 278, 720 278"/>
+  </g>
+
+  <text x="40" y="52" class="label">YOUR SOURCES</text>
+  <g fill="#FFFFFF" stroke="#E8E3D9">
+    <rect x="40" y="68" width="200" height="36" rx="9"/>
+    <rect x="40" y="116" width="200" height="36" rx="9"/>
+    <rect x="40" y="164" width="200" height="36" rx="9"/>
+    <rect x="40" y="212" width="200" height="36" rx="9"/>
+    <rect x="40" y="260" width="200" height="36" rx="9"/>
+  </g>
+  <text x="56" y="91" class="pill">CSV, JSON, Parquet files</text>
+  <text x="56" y="139" class="pill">Postgres, MySQL, MariaDB</text>
+  <text x="56" y="187" class="pill">S3 object storage</text>
+  <text x="56" y="235" class="pill">Iceberg REST catalogs</text>
+  <text x="56" y="283" class="pill">Singer taps</text>
+
+  <rect x="330" y="68" width="300" height="244" rx="14" fill="#FFFFFF" stroke="#E8E3D9"/>
+  <g transform="translate(352 86) scale(1.125)">
+    <rect width="32" height="32" rx="7" fill="#6D28D9"/>
+    <path d="M13 24.5 21 9.5l8 15Z" fill="#B9A2F8" stroke="#B9A2F8" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M3 24.5 11.5 11l8.5 13.5Z" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+  </g>
+  <text x="400" y="113" font-size="22" font-weight="700">Aran</text>
+  <g fill="#6D28D9">
+    <circle cx="362" cy="160" r="10"/>
+    <circle cx="362" cy="198" r="10"/>
+    <circle cx="362" cy="236" r="10"/>
+    <circle cx="362" cy="274" r="10"/>
+  </g>
+  <text x="358.5" y="164" class="num">1</text>
+  <text x="358.5" y="202" class="num">2</text>
+  <text x="358.5" y="240" class="num">3</text>
+  <text x="358.5" y="278" class="num">4</text>
+  <text x="382" y="165" class="step">Derive a schema per source</text>
+  <text x="382" y="203" class="step">Profile columns, propose joins</text>
+  <text x="382" y="241" class="step">Align into one vocabulary</text>
+  <text x="382" y="279" class="step">Version, diff and roll back</text>
+
+  <text x="720" y="52" class="label">YOUR TOOLS</text>
+  <g fill="#FFFFFF" stroke="#E8E3D9">
+    <rect x="720" y="68" width="200" height="36" rx="9"/>
+    <rect x="720" y="116" width="200" height="36" rx="9"/>
+    <rect x="720" y="164" width="200" height="36" rx="9"/>
+    <rect x="720" y="212" width="200" height="36" rx="9"/>
+    <rect x="720" y="260" width="200" height="36" rx="9"/>
+  </g>
+  <text x="736" y="91" class="pill">Query workbench (OQL)</text>
+  <text x="736" y="139" class="pill">JDBC for BI tools</text>
+  <text x="736" y="187" class="pill">REST export</text>
+  <text x="736" y="235" class="pill">MCP for AI agents</text>
+  <text x="736" y="283" class="pill">Data products</text>
+</svg>

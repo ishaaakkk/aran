@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use Aran in your research, please cite it using these metadata."
+type: software
+title: "Aran: automated schema integration for heterogeneous data"
+abstract: >-
+  Aran is a data integration platform for heterogeneous sources. It derives a
+  schema for each source from the data, proposes joins from profiling evidence,
+  aligns the schemas into a shared, versioned vocabulary, and answers queries
+  over that vocabulary with Apache Calcite and DuckDB.
+authors:
+  - name: "DTAK research group, Universitat Politècnica de Catalunya"
+    website: "https://www.upc.edu"
+repository-code: "https://github.com/dtak-upc/aran"
+url: "https://dtak-upc.github.io/aran/"
+license: Apache-2.0
+version: 0.1.0
+keywords:
+  - data integration
+  - schema integration
+  - data lakes
+  - query processing
+  - Apache Calcite
+  - DuckDB

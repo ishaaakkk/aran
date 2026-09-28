@@ -1,0 +1,44 @@
+name: Feature request
+description: Suggest a capability Aran does not have.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Aran is maintained by a small research group, and its roadmap is
+        deliberately narrow. The most useful request describes the problem you
+        hit, not only the feature that would solve it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: >-
+        What are you trying to do that Aran makes hard or impossible? Describe the
+        situation rather than the solution — it is common for there to be a better
+        fix than the one that first comes to mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like Aran to do
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you are doing instead today
+      description: Workarounds, other tools, or "nothing — I gave up". All three are informative.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: conduct
+    attributes:
+      label: Code of Conduct
+      options:
+        - label: I agree to follow this project's [Code of Conduct](../blob/main/CODE_OF_CONDUCT.md).
+          required: true

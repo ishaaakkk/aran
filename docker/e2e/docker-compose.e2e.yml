@@ -1,0 +1,110 @@
+# ===========================================================================
+#  Isolated stack for the Playwright end-to-end suite.
+#
+#  Every port is offset from dev so this can run beside `make all`.
+#  Always use the aran-e2e project name:
+#    docker compose -p aran-e2e -f docker/e2e/docker-compose.e2e.yml up -d
+#
+#  ⚠ Throwaway credentials. This stack is localhost-only and `down -v` wipes it.
+# ===========================================================================
+name: aran-e2e
+
+services:
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: aran
+      POSTGRES_USER: aran
+      POSTGRES_PASSWORD: aran
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aran -d aran"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # The federated source for the M9 import scenario.
+  source-postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: sourcedb
+      POSTGRES_USER: source
+      POSTGRES_PASSWORD: source
+    ports:
+      - "55433:5432"
+    volumes:
+      - ./source-db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U source -d sourcedb"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    command: start-dev --import-realm --http-port=8180
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./aran-realm-e2e.json:/opt/keycloak/data/import/aran-realm-e2e.json:ro
+
+  fuseki:
+    image: stain/jena-fuseki:5.1.0
+    environment:
+      ADMIN_PASSWORD: admin
+    ports:
+      - "3130:3030"
+
+  garage:
+    image: dxflrs/garage:v1.0.1
+    ports:
+      - "33900:3900"
+    volumes:
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+      - ./garage.toml:/etc/garage.toml:ro
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  garage-init:
+    build:
+      dockerfile_inline: |
+        FROM dxflrs/garage:v1.0.1 AS garage
+        FROM alpine:3
+        COPY --from=garage /garage /garage
+    depends_on:
+      garage:
+        condition: service_healthy
+    volumes:
+      - ../../aran-lake/docker/garage/init.sh:/init.sh:ro
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    restart: "no"
+
+  lake-postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: aran_lake
+      POSTGRES_USER: aran_lake
+      POSTGRES_PASSWORD: aran_lake_dev
+    ports:
+      - "55434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aran_lake -d aran_lake"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  garage-meta:
+  garage-data:

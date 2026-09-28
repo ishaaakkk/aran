@@ -1,0 +1,125 @@
+# =============================================================================
+#  aran-lake — local development stack
+#
+#  Brings up:
+#    - garage        Garage S3-compatible object storage (single-node dev mode)
+#    - garage-init   one-shot job that bootstraps the dev bucket + access keys
+#    - postgres      catalog database
+#    - lake          the FastAPI lake service
+#
+#  Usage:
+#    docker compose up -d
+#    docker compose logs -f lake
+#    curl http://localhost:8080/health
+# =============================================================================
+
+services:
+
+  garage:
+    image: dxflrs/garage:v1.0.1
+    container_name: aran-lake-garage
+    restart: unless-stopped
+    networks: [lakenet]
+    ports:
+      # Loopback-bound by default. Object storage is reached by Aran, never by a user
+      # agent: the backend does the S3 PUT itself on upload and the GET itself on read,
+      # so nothing outside this host has business addressing Garage directly. Publishing
+      # on 0.0.0.0 — Docker's default for a bare "3900:3900" — would put the bucket on
+      # every interface the host has, guarded only by a static access key.
+      # Override deliberately (ARAN_LAKE_BIND=0.0.0.0) if Aran runs on another host.
+      - "${ARAN_LAKE_BIND:-127.0.0.1}:3900:3900"   # S3 API
+      # Port 3902 (admin API) intentionally NOT exposed to host — admin operations must
+      # go through the internal Docker network only (garage-init container or docker exec).
+    volumes:
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+      - ./docker/garage/garage.toml:/etc/garage.toml:ro
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # Bootstraps a layout + an access key on first run. Idempotent — safe to re-run.
+  garage-init:
+    build:
+      dockerfile_inline: |
+        FROM dxflrs/garage:v1.0.1 AS garage
+        FROM alpine:3
+        COPY --from=garage /garage /garage
+    container_name: aran-lake-garage-init
+    depends_on:
+      garage:
+        condition: service_healthy
+    networks: [lakenet]
+    volumes:
+      - ./docker/garage/garage.toml:/etc/garage.toml:ro
+      - ./docker/garage/init.sh:/init.sh:ro
+      - garage-meta:/var/lib/garage/meta:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    restart: "no"
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: aran-lake-postgres
+    restart: unless-stopped
+    networks: [lakenet]
+    ports:
+      # Loopback-bound: the lake's own database, reached by the lake service over the
+      # internal network. It is published at all only so alembic and psql can be run
+      # from the host during development.
+      - "${ARAN_LAKE_BIND:-127.0.0.1}:5433:5432"   # 5433 avoids clashing with Aran's own Postgres
+    environment:
+      POSTGRES_DB: aran_lake
+      POSTGRES_USER: aran_lake
+      POSTGRES_PASSWORD: aran_lake_dev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aran_lake -d aran_lake"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  lake:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aran-lake
+    restart: unless-stopped
+    networks: [lakenet]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
+    ports:
+      # Loopback-bound by default. The lake authenticates Aran with a single shared
+      # secret, not per-user identity — anything that reaches this port with that secret
+      # IS Aran as far as the lake is concerned, for every tenant at once. That is fine
+      # for a port only the local backend can address, and is the whole exposure story
+      # if it is published on 0.0.0.0.
+      # Override deliberately (ARAN_LAKE_BIND=0.0.0.0) if Aran runs on another host —
+      # and put a real network boundary in front of it when you do.
+      - "${ARAN_LAKE_BIND:-127.0.0.1}:8085:8080"
+    environment:
+      ARAN_LAKE_DATABASE_URL: "${ARAN_LAKE_DATABASE_URL:-postgresql+asyncpg://aran_lake:aran_lake_dev@postgres:5432/aran_lake}"
+      ARAN_LAKE_S3_ENDPOINT_URL: "http://garage:3900"
+      ARAN_LAKE_S3_REGION: "garage"
+      ARAN_LAKE_S3_BUCKET: "aran-lake"
+      # ⚠ DEV-ONLY credentials — override via env vars in production
+      ARAN_LAKE_S3_ACCESS_KEY: "${ARAN_LAKE_S3_ACCESS_KEY:-GK000000000000000000000000}"
+      ARAN_LAKE_S3_SECRET_KEY: "${ARAN_LAKE_S3_SECRET_KEY:-0000000000000000000000000000000000000000000000000000000000000000}"
+      ARAN_LAKE_SHARED_SECRET: "${ARAN_LAKE_SHARED_SECRET:-dev-shared-secret-change-in-prod}"
+      ARAN_LAKE_PROFILE: "dev"
+      ARAN_LAKE_LOG_LEVEL: "INFO"
+
+networks:
+  lakenet:
+    driver: bridge
+
+volumes:
+  garage-meta:
+  garage-data:
+  postgres-data:

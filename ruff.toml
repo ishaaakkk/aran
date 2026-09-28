@@ -1,0 +1,62 @@
+# The one ruff configuration for every Python tree in this repo.
+#
+# It used to live in aran-lake/pyproject.toml and apply only there, so `freyja/` and
+# `aran-client/` — 4,600 lines, including the join-discovery sidecar — were never linted
+# at all. Two `# noqa: BLE001` comments had accumulated in freyja suppressing a rule that
+# was neither selected nor applied to it.
+#
+# Ruff resolves configuration by walking up from each file, so a single file here covers
+# all three trees and there is no second copy to drift. aran-lake's pyproject keeps its
+# mypy and pytest sections; its [tool.ruff] block was removed in favour of this.
+line-length = 100
+target-version = "py312"
+
+# First-party roots, so isort groups imports the same way it did when this config lived
+# in aran-lake/pyproject.toml. Paths resolve relative to this file, not the working
+# directory, so `ruff check .` gives identical results from the repo root or from any
+# service directory — which matters because CI runs it from aran-lake.
+src = ["aran-lake/src", "aran-lake/tests", "freyja", "aran-client"]
+
+[lint]
+select = [
+    "E", "F", "W",   # pycodestyle / pyflakes
+    "I",             # isort
+    "B",             # bugbear
+    "UP",            # pyupgrade
+    "SIM",           # simplifications
+    "RUF",           # ruff-specific
+    "PT",            # pytest style
+    "S",             # security (bandit subset)
+]
+ignore = [
+    "S101",  # asserts in tests are fine
+    "E501",  # long lines occasionally OK
+    # House style: the prose comments in this repo use en/em dashes and × deliberately.
+    # RUF003 flags them as "ambiguous unicode", which here means "correctly typeset".
+    "RUF003",
+]
+
+[lint.per-file-ignores]
+"**/tests/**" = ["S"]
+# examples/ are copy-paste demo scripts: dev tokens and /tmp paths are the point.
+"aran-lake/examples/**" = ["S105", "S106", "S108"]
+
+# The interpolations are identifiers escaped by _q(), which doubles any embedded quote —
+# there is no string-literal context for a value to break out of. Scoped to this file
+# rather than silenced inline: a `# noqa` after the opening `f"""` of a multi-line query
+# lands INSIDE the string and changes the SQL, which is a real way to break this.
+"freyja/profiling/metrics.py" = ["S608"]
+
+# ProfileOptions is @dataclass(frozen=True, slots=True), so the shared-mutable-default
+# hazard B008 exists to catch cannot occur. Scoped to the two files that construct it,
+# so B008 keeps working everywhere else.
+"freyja/operator/profile_operator.py" = ["B008"]
+"freyja/profiling/profiler.py" = ["B008"]
+
+# S105: _SECRET_ENV is the NAME of a variable, not a credential — S105 matches the
+# identifier, not the value.
+# B008: `= Depends(...)` in a parameter default IS the FastAPI idiom; the framework reads
+# those defaults to build the dependency graph. B008's shared-mutable-default hazard does
+# not apply, and writing it any other way breaks injection.
+"freyja/api/profile_api.py" = ["S105", "B008"]
+"aran-client/aran_client/_connection.py" = ["S105", "S104"]

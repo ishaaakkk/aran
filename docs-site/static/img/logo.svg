@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Aran">
+  <rect width="32" height="32" rx="7" fill="#6D28D9"/>
+  <path d="M13 24.5 21 9.5l8 15Z" fill="#B9A2F8" stroke="#B9A2F8" stroke-width="1.2" stroke-linejoin="round"/>
+  <path d="M3 24.5 11.5 11l8.5 13.5Z" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>

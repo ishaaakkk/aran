@@ -1,0 +1,27 @@
+Aran
+Copyright 2026 The DTAK research group, Universitat Politècnica de Catalunya
+
+This product includes software developed at the DTAK research group,
+Universitat Politècnica de Catalunya (https://www.upc.edu/).
+
+--------------------------------------------------------------------------------
+Vendored research code
+--------------------------------------------------------------------------------
+
+The module aran-operators/constraint-discovery contains a vendored copy of the
+DTAK constraint-discovery research codebase (the LIMA lattice scheduler), in the
+packages:
+
+    edu.upc.lima
+    edu.upc.lattice
+    edu.upc.data
+    edu.upc.utils
+
+This code originates in the group's research repository rather than in Aran, and
+retains its own dataset and schema model. It is copyright the same holder named
+above and is distributed here under the Apache License, Version 2.0, along with
+the rest of this product.
+
+See aran-operators/constraint-discovery/VENDORED.md for the rules of engagement
+for that code, including the requirement that upstream fixes land in the research
+repository first so the copies do not fork.

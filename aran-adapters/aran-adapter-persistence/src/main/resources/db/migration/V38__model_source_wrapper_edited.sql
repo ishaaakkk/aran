@@ -1,0 +1,24 @@
+-- V47: tell an enrolment-time wrapper copy apart from one a person wrote.
+--
+-- IntegrationModelService.addSource seeds model_source.wrapper_sql from the source class's
+-- nx:wrapperSql once, at enrolment, and every later compile pushes that stored copy back over the
+-- freshly bootstrapped one (SchemaIntegrationOperator.applyWrapperOverrides). After a refresh that
+-- changes the source's columns, the seed is stale and outranks the bootstrap's own correct answer,
+-- so every query over the class dies on a DuckDB binder error naming a column that no longer
+-- exists. Nothing compared the two, because nothing could: both fields hold the same kind of
+-- string and neither says who wrote it.
+--
+-- This column is that missing fact. FALSE = "nobody has edited this; it is a copy of what
+-- bootstrap produced, and re-seeding it from a newer bootstrap loses nothing". TRUE = "a person
+-- saved this through PUT /model/sources/{datasetId}/wrappers; never overwrite it — validate it
+-- against the new schema instead and fail the compile if it can no longer be served".
+--
+-- BACKFILL IS FALSE FOR EVERY EXISTING ROW, INCLUDING GENUINE HAND EDITS. There is no record of
+-- who wrote a pre-V38 wrapper — that is precisely the fact this column adds — so the choice is
+-- between assuming every existing row was edited (freezing every stale seed in place, i.e.
+-- keeping V47 for every pre-existing deployment) and assuming none were (a pre-existing hand
+-- edit is re-seeded from the graph on the dataset's next refresh, and the user re-applies it).
+-- Pre-release, with the defect live and every wrapper reproducible from bootstrap, the second is
+-- the smaller loss. Documented rather than silent: this is the one migration on this table that
+-- can discard user text.
+ALTER TABLE model_source ADD COLUMN wrapper_edited BOOLEAN NOT NULL DEFAULT FALSE;

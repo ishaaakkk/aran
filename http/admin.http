@@ -1,0 +1,77 @@
+### ============================================================
+###  Platform Admin API — /api/admin/**
+###  Requires the `platform-admin` Keycloak realm role.
+###  Alice has this role in the dev seed (aran-realm.json).
+###  Cloud mode only: these endpoints don't load in self-hosted mode
+###  (no LicenseAdminPort bean → no controller).
+###  Run auth.http first to populate {{access_token}}.
+### ============================================================
+
+### Create a new tenant with a FREE plan and a first owner
+# @name createTenant
+POST {{baseUrl}}/api/admin/tenants
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "slug": "acme-corp",
+  "name": "Acme Corp",
+  "plan": "PRO",
+  "firstOwnerSubject": "REPLACE_WITH_KEYCLOAK_SUBJECT_OF_FIRST_OWNER"
+}
+
+> {%
+  client.global.set("new_tenant_id", response.body.id);
+  client.log("Created tenant: " + response.body.id + " (slug: " + response.body.slug + ")");
+%}
+
+### Add an additional member to the new tenant (admin path — no license check on caller)
+POST {{baseUrl}}/api/admin/tenants/{{new_tenant_id}}/members
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "subject": "REPLACE_WITH_KEYCLOAK_SUBJECT",
+  "role": "MEMBER"
+}
+
+### ── Validation errors ──────────────────────────────────────
+
+### 400 — invalid slug (uppercase not allowed)
+POST {{baseUrl}}/api/admin/tenants
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "slug": "Invalid_Slug",
+  "name": "Bad Slug Corp",
+  "plan": "FREE",
+  "firstOwnerSubject": "any-subject"
+}
+
+### 404 — first owner has never signed in (no app_user row)
+POST {{baseUrl}}/api/admin/tenants
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "slug": "ghost-corp",
+  "name": "Ghost Corp",
+  "plan": "FREE",
+  "firstOwnerSubject": "non-existent-subject-uuid"
+}
+
+### 403 — non-admin user tries to access admin API
+###   (Get a token for a user without platform-admin role, then call:)
+POST {{baseUrl}}/api/admin/tenants
+Authorization: Bearer NON_ADMIN_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "slug": "hacked",
+  "name": "Hacked Corp",
+  "plan": "ENTERPRISE",
+  "firstOwnerSubject": "anything"
+}

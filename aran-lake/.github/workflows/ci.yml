@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pip install uv==0.4.27
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Create venv and install
+        run: |
+          uv venv .venv
+          uv pip install --python .venv/bin/python -e ".[dev]"
+
+      - name: Ruff lint
+        run: .venv/bin/ruff check src tests
+
+      - name: Ruff format check
+        run: .venv/bin/ruff format --check src tests
+
+      - name: Mypy type-check
+        run: .venv/bin/mypy src
+
+      - name: Pytest (unit + integration via testcontainers)
+        env:
+          # Testcontainers needs Docker; ubuntu-24.04 has it preinstalled.
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: .venv/bin/pytest -v --cov=aran_lake --cov-report=term-missing

@@ -1,0 +1,43 @@
+// ===========================================================================
+//  constraint-discovery operator (LIMA)
+//  Responsible for denial constraint discovery.
+//  Depends directly on aran-core to implement its core Operator bean.
+// ===========================================================================
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':aran-core')
+    implementation 'org.jspecify:jspecify'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springframework:spring-context'
+    implementation 'org.slf4j:slf4j-api'
+    
+    // LIMA dependencies.
+    //
+    // javacsv is used by exactly one file, the vendored edu.upc.data.dataset.CSVDataset.
+    // The rest of the repo parses CSV with commons-csv (aran-core, bootstrapping), so this is
+    // a second parser for one class. Left in place deliberately: CSVDataset is vendored
+    // research code, and rewriting its parsing to change nothing observable is a poor trade
+    // against a suite that cannot exercise the constraint-discovery path end to end here.
+    implementation 'net.sourceforge.javacsv:javacsv:2.0'
+    implementation 'com.koloboke:koloboke-impl-jdk8:1.0.0'
+    implementation 'com.koloboke:koloboke-api-jdk8:1.0.0'
+    implementation 'org.roaringbitmap:RoaringBitmap:0.8.12'
+    // univocity-parsers removed 2026-08-16: declared here, imported by zero files in the repo.
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // The wrapper-output discovery path (discover with wrapperSql) runs an in-process DuckDB to
+    // COPY the resolved wrapper output to a temp CSV before LIMA reads it. Main code reaches the
+    // driver via Class.forName + java.sql only (no runtime `implementation` dep — the driver is on
+    // aran-application's classpath, exactly as aran-operators:query-engine does it); its own tests
+    // need the real driver, so it is a test dependency here.
+    testImplementation "org.duckdb:duckdb_jdbc:${duckdbJdbcVersion}"
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

@@ -70,6 +70,11 @@ changelog in [`aran-client/`](aran-client/).
 
 ### Fixed
 
+- The `freyja` component of `/actuator/health` now probes FREYJA's `/healthz` and reports DOWN
+  when it answers 503 (join-ranking model not loaded). It probed `/health`, a route FREYJA does not
+  serve, and counted the 404 as UP.
+- The web client no longer says an agent's read of a virtual product is capped at 1,000 rows. It
+  takes the agent's row limit like any other product's.
 - `aran-web/e2e/specs/s1-query-stress.spec.ts`'s header claimed the spec had never been executed;
   it ran twice against a live stack on 2026-08-21. Comment only.
 

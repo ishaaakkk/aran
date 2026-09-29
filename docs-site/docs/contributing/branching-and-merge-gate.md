@@ -6,6 +6,10 @@ description: 'Branch naming, what must be green before a merge, and how to get t
 # Diátaxis mode: how-to
 ---
 
+How to take a change from a branch to a merge: name the branch, iterate on
+the offline gate, pass the full gate, and read what CI runs on the pull
+request.
+
 ## Branch
 
 Feature branches off `main`:
@@ -16,7 +20,7 @@ git checkout -b feature/phase0-m11-my-change
 ```
 
 Phase 0 work uses `feature/phase0-m<N>-<slug>`. Other work follows the same
-shape — a type prefix, then a slug.
+shape: a type prefix, then a slug.
 
 ## Work
 
@@ -36,29 +40,34 @@ cd aran-web && npm test
 
 ## The gate
 
-**Merge only after `./scripts/validate.sh` is ALL GREEN.** Not the offline
-subset — the full run.
+Merge only after `./scripts/validate.sh` is ALL GREEN. The offline subset is
+not enough; run the full gate.
 
 ```bash
 ./scripts/validate.sh
 ```
 
 It ends with `VALIDATION: ALL GREEN`. Anything else counts as a failure,
-including a skipped step.
+including a run limited with a part selector (`--java`, `--web`,
+`--python`), which ends with `unselected parts were NOT run`. The two
+opt-in `SKIPPED:` lines for the perf benchmark and the browser suite are
+expected.
 
 `--offline` deliberately prints what it did not cover:
 
-- `:aran-application:test` — the `@Tag("docker")` integration tests
+- the `@Tag("docker")` Java tests: the `aran-application` integration tests
+  and the Garage- or PostgreSQL-backed operator tests
 - the `aran-lake` pytest suite (Testcontainers)
+- `freyja`'s `docker`-marked live-scan tests
 - the Playwright browser suite
 
-Those three are exactly the things most likely to catch a wiring mistake. So
-the offline run is a fast loop, not a substitute.
+Those are the checks most likely to catch a wiring mistake, so the offline
+run is a fast loop and not a substitute.
 
 ## The browser suite
 
-Not part of the default gate — it takes about ten minutes, and it owns its
-own stack. Opt in:
+The browser suite is not part of the default gate: it takes about ten minutes
+and owns its own stack. Opt in:
 
 ```bash
 RUN_E2E=1 ./scripts/validate.sh
@@ -69,29 +78,32 @@ integrate-and-query path. See [the e2e suite](./e2e-suite.md).
 
 ## CI
 
-Every pull request against `main` runs five jobs:
+The `CI` workflow runs on every pull request against `main` and on every
+push to `main` or `develop`. Its test jobs call `validate.sh` itself, one
+part each, so CI and your machine run the same commands:
 
-- **Backend** — the Gradle build and the full Java test suite, against a
-  PostgreSQL service container.
-- **Frontend** — the type-check, lint, build, and test suite.
-- **Lake (Python)** — `ruff check .` over every Python tree, then the
-  pytest suites of `aran-lake`, `freyja` (plus an import smoke test),
-  `aran-client`, `aran-mcp`, `tests/sidecar_contract` and `tests/scripts`.
-- **Supply chain** — gitleaks over the full git history (development
-  sentinels are allowlisted by value, not by path, so a real secret in the
-  same file is still caught), and picklescan over `freyja/models/model.pkl`.
-- **Docker** — builds the image. It pushes only on merges to `main`.
+| Job | What it runs |
+| --- | --- |
+| Java | `./scripts/validate.sh --java`: the Gradle build and every Java suite, Docker-tagged tests included. The tests start their own PostgreSQL and Garage through Testcontainers |
+| Web | `./scripts/validate.sh --web`: build (with type-check), lint and Vitest |
+| Python | `./scripts/validate.sh --python`: `ruff check .`, then every Python suite the gate lists |
+| Supply chain | gitleaks over the full git history (development sentinels are allowlisted by value, not by path, so a real secret in the same file is still caught), and picklescan over `freyja/models/model.pkl` |
+| Images | Only on a push to `main`: builds and pushes the `aran` (with `WITH_UI=true`), `aran-lake` and `aran-freyja` images to `ghcr.io` |
 
-A separate workflow runs a dependency review on every pull request. It
-alerts on new high or critical CVEs and GPL-family licences.
+A suite added to `validate.sh` is therefore picked up by CI with no workflow
+change.
+
+A separate workflow runs a dependency review on every pull request against
+`main`. It fails on new dependencies with high or critical vulnerabilities,
+and on GPL-2.0, GPL-3.0 and AGPL-3.0 licences.
 
 The browser e2e suite has its own workflow. It runs on every push to
-`main`, on a nightly schedule, and on manual dispatch — so a regression the
-local opt-in missed is still caught, and attributed to a day's merges
-rather than guessed at.
+`main`, on a nightly schedule, and on manual dispatch. A regression the
+local opt-in missed is therefore still caught and attributed to a day's merges.
 
-Docs changes additionally run the documentation gate: the site build, a link
-check, a Mermaid render check in a real browser, and a check that the
+Docs changes additionally run the documentation gate: a type-check of the
+site config, the site build, a link check, a Mermaid render check in a real
+browser, the prose-pattern check, and a check that the
 committed OpenAPI snapshot still matches the service. Backend changes run it
 too, because the snapshot is generated from the backend: a pull request that
 moves a controller or a wire DTO regenerates and commits
@@ -103,11 +115,11 @@ moves a controller or a wire DTO regenerates and commits
 - Unit tests sit in `src/test/java` beside the code they test.
 - Integration tests needing a real PostgreSQL use Testcontainers, by
   extending `BaseIntegrationTest`, which carries `@Tag("docker")`. Tags are
-  inherited, so `--offline` excludes them automatically — you do not tag
+  inherited, so `--offline` excludes them automatically and you do not tag
   your subclass.
-- A **new Docker-free test in `aran-application` needs no tag** and is
+- A new Docker-free test in `aran-application` needs no tag and is
   picked up by the offline run the day it is written. A forgotten tag makes
-  a test *run* rather than vanish — the safe direction.
+  a test run instead of vanish, which is the safe direction.
 
 ## Before you open the pull request
 

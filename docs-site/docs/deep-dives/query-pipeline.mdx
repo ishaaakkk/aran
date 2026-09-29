@@ -7,10 +7,9 @@ description: 'How an OQL string becomes DuckDB SQL: parsing, planning over Calci
 ---
 
 An OQL query names integrated classes that do not exist as tables anywhere.
-Turning it into something a database can run means unfolding those classes
-into the source views behind them. It also means choosing between the
-several correct SQL statements that unfolding permits. This page describes
-how that happens.
+To run it, Aran unfolds those classes into the source views behind them and
+chooses between the several correct SQL statements that unfolding permits.
+This page describes how.
 
 ## The stages
 
@@ -23,8 +22,8 @@ OQL string
   → DuckDbExecutor             creates src_/w_/u_/int_ views, runs the SQL
 ```
 
-There is exactly one query pipeline. Aran deleted an earlier string-rewriting
-path, `OqlRewriter`. Nothing falls back to it.
+There is one query pipeline. Aran deleted an earlier string-rewriting path,
+`OqlRewriter`, and nothing falls back to it.
 
 ```mermaid
 sequenceDiagram
@@ -64,16 +63,17 @@ sequenceDiagram
 
 ## Parsing
 
-`OqlParser` is a hand-written lexer plus recursive-descent parser — no
-generated grammar. It produces an `OqlQuery` AST. The full accepted grammar
-is in the [syntax reference](../oql/syntax-reference.md). The shape is:
+`OqlParser` is a hand-written lexer plus recursive-descent parser, with no
+generated grammar. It produces an `OqlQuery` AST. The [syntax
+reference](../oql/syntax-reference.md) has the full accepted grammar. The shape
+is:
 
 ```
 query := SELECT projList [FROM pathExpr] [WHERE conj]
          [GROUP BY groupList] [HAVING havingConj] [ORDER BY orderList] [LIMIT int]
 ```
 
-with the distinguishing production being the path expression:
+and the distinguishing production is the path expression:
 
 ```
 pathExpr := ClassName ('-[' ident ']->' ClassName)*
@@ -85,23 +85,23 @@ pathExpr := ClassName ('-[' ident ']->' ClassName)*
 `AranSchema` is a Calcite schema built from the mapping catalog, not from a
 database's information schema.
 
-`AranSchema` registers **two levels** of the unfolding as tables:
+`AranSchema` registers two levels of the unfolding as tables:
 
-- `int_<class>` — the integrated class, with statistics summed across its sources.
-- `u_<dataset>_<class>` — one per union member, each carrying that source's own
-  row count and keys.
+- `int_<class>` is the integrated class, with statistics summed across its sources.
+- `u_<dataset>_<class>` is one union member per source, carrying that source's
+  own row count and keys.
 
-Both are real DuckDB views. A plan may reference either. Registering the
-members is what lets `UNION ALL` appear in the `RelNode` tree at all. Without
-it, the union is invisible to the planner. Per-source statistics would also
-get aggregated away before the cost model can use them.
+Both are real DuckDB views, and a plan may reference either. Registering the
+members is what lets `UNION ALL` appear in the `RelNode` tree. Without it the
+planner cannot see the union, and per-source statistics would be aggregated
+away before the cost model can use them.
 
 A third level appears when a wrapper is planned through. Probing an
 [Optimizable wrapper](../query-engine/wrapper-optimisation.md) registers
-`src_<dataset>` — the raw snapshot relation — in a throwaway one-table
-schema, and an expanded member's plan bottoms out in a scan of that `src_`
-relation instead of the opaque `u_` view. That is what lets a query
-predicate travel inside the wrapper.
+`src_<dataset>`, the raw snapshot relation, in a throwaway one-table schema,
+and an expanded member's plan bottoms out in a scan of that `src_` relation
+instead of the opaque `u_` view. That lets a query predicate travel inside the
+wrapper.
 
 Plans come out in one of two shapes:
 
@@ -111,42 +111,49 @@ Plans come out in one of two shapes:
 | Aggregate | Scan → [Join] → [Filter] → Aggregate → [HavingFilter] → [Limit] |
 
 Joins are not inferred. Each `-[prop]->` step resolves to a `JoinProperty`
-from the catalog. That `JoinProperty` carries the two integrated-class IRIs.
-It also carries the two global property IRIs that are the key columns. The
-planner uses those directly.
+from the catalog, which carries the two integrated-class IRIs and the two
+global property IRIs that are the key columns. The planner uses those
+directly.
 
 ## Optimisation
 
-`PlanExecutor.optimize` runs a **single VolcanoPlanner pass**. Logical
-rewrites and physical conversion happen together. The planner explores every
-rewrite as a costed alternative. It never applies a rewrite just because it
-matched.
+`PlanExecutor.optimize` runs a single VolcanoPlanner pass. Logical rewrites and
+physical conversion happen together, and the planner explores every rewrite as
+a costed alternative. It never applies a rewrite just because it matched.
 
-**The rule set is owned, not inherited.** A planner from `RelBuilder.create`
-arrives preloaded with Calcite's full default preparation set — 113 rules.
-`AranRules.install` empties it and installs only what
-Aran wants. That is not tidiness. One of the default rules, merge join,
-asked for a collation that nothing else needed. That collation seeded a node
-in the plan. The extra node made `JoinUnionTransposeRule` abort planning
-outright.
+Aran owns the rule set. A planner from `RelBuilder.create` arrives preloaded
+with Calcite's full default preparation set of 113 rules, and
+`AranRules.install` empties it and installs only the rules Aran wants. This
+matters for correctness. One default rule, merge join, asked for a collation
+that nothing else needed, and that collation seeded a node in the plan. The
+extra node made `JoinUnionTransposeRule` abort planning outright.
 
-**There is no heuristic pre-pass.** A `HepPlanner` phase used to run first.
-The reason: the logical rewrites appeared not to survive in Volcano alongside
-the Enumerable rules. That turned out to be a consequence of the inherited
-rule set rather than of Volcano. Removing the Hep phase is what makes the
-join-below-union rewrite a real decision. Under Hep, the rewrite fired
-whenever it matched. As a result, it needed an arbitrary cap on how many
-branches it could produce. Under Volcano, both shapes stay in the `RelSet`
-instead. The cheaper one wins.
+There is no heuristic pre-pass. A `HepPlanner` phase used to run first,
+because the logical rewrites appeared not to survive in Volcano alongside the
+Enumerable rules. That turned out to come from the inherited rule set and not
+from Volcano. Removing the Hep phase makes the join-below-union rewrite a real
+decision. Under Hep the rewrite fired whenever it matched, so it needed an
+arbitrary cap on how many branches it could produce. Under Volcano both shapes
+stay in the `RelSet` and the cheaper one wins.
 
-Costs come from `AranRelMdRowCount` over `WrapperStatistic` — per-source row
-counts and keys derived from FREYJA profiles. A dataset that has never been
-profiled reports a row count of zero. That zero becomes Calcite's
-`Statistics.UNKNOWN`. The optimiser still produces a correct plan. It just
-has no basis for choosing between alternatives.
+The pass is bounded. The planner is cancelled after 50,000 rule productions
+(`aran.query.planner.production-budget`), a count that depends only on the
+catalog and the query, so a query gets the same plan on every machine. A
+wall-clock guard of 20 seconds (`aran.query.planner.wall-clock-guard`) is a
+second limit for the case the count does not catch. Once cancelled, the
+planner serves the cheapest plan it has found so far. If it has not yet
+implemented any plan, Aran falls back to a structural plan from a small Hep
+program. Either outcome is reported under `planning` in the payload, so the
+plan you are shown says whether it is the one the optimiser would have chosen.
 
-The chosen physical plan is walked back to logical form before unparsing.
-This step exists because `RelToSqlConverter` cannot unparse physical nodes.
+Costs come from `AranRelMdRowCount` over `WrapperStatistic`, which holds
+per-source row counts and keys derived from FREYJA profiles. A dataset that has
+never been profiled reports a row count of zero, which becomes Calcite's
+`Statistics.UNKNOWN`. The optimiser still produces a correct plan but has no
+basis for choosing between alternatives.
+
+Aran walks the chosen physical plan back to logical form before unparsing,
+because `RelToSqlConverter` cannot unparse physical nodes.
 
 ## SQL generation and execution
 
@@ -154,46 +161,48 @@ This step exists because `RelToSqlConverter` cannot unparse physical nodes.
 then creates the view stack described in
 [Core concepts](../overview/core-concepts.md#views-src_-w_-u_-int_) and runs it.
 
-At this point, `DuckDbExecutor` substitutes `${SNAPSHOT}` in each wrapper
-with the `src_` view name. The **snapshot resolver** decides what `src_`
-itself reads. This is where the federated path lives:
+`DuckDbExecutor` substitutes `${SNAPSHOT}` in each wrapper with the `src_`
+view name. The **snapshot resolver** decides what `src_` itself reads, and the
+federated path lives there:
 
 - Ordinary datasets download their lake snapshot to a temp file and read it with
   the function the format requires. The format-specific expression
   (`read_parquet` and friends) belongs here, keyed off `nx:format`, and never
   inside wrapper SQL.
-- Relational repositories flagged `federated` resolve to a live read
-  instead: a table of the source database attached read-only under
-  `aran_attach_<repository>`. For PostgreSQL, MySQL and MariaDB alike, the
-  connection runs a temporary secret and the `ATTACH` before the views. As a result, the query reads the source
-  database directly. Only PostgreSQL, MySQL, and MariaDB can be federated.
-  The schema-drift probe and federated profiling share that same read. As a
-  result, neither can end up connecting somewhere subtly different from where
-  queries go.
+- Relational repositories flagged `federated` resolve to a live read instead:
+  a table of the source database attached read-only under
+  `aran_attach_<repository>`. The connection runs a temporary secret and the
+  `ATTACH` before the views, so the query reads the source database directly.
+  Only PostgreSQL, MySQL and MariaDB can be federated among relational
+  engines. The schema-drift probe and federated profiling share that read, so
+  neither can connect somewhere different from where queries go.
+- A table in an Iceberg REST catalog read live resolves to `iceberg_scan` over
+  the metadata location the catalog reports at query time, and an object read
+  live from object storage resolves to an `s3://` read. The credentials go on
+  the connection as secrets, never into the SQL.
 
 Only the classes a statement names are materialised. The executor extracts
 the referenced classes from the generated SQL before creating views, so a
 query over one class does not download every source of every class.
 
-DuckDbExecutor converts results to JSON, preserving their types wherever
-JSON can represent them without loss. Integers, booleans, strings, and
-doubles pass through unchanged. A `BIGINT` outside JavaScript's
-safe-integer range becomes a string instead: `JSON.parse` would silently
-round it, and a silently rounded number is worse than a string.
-DuckDbExecutor stringifies `BigDecimal`, `HUGEINT`, dates, timestamps,
-arrays, and structs for the same reason — JSON also has no native form for
-them.
+`DuckDbExecutor` converts results to JSON and keeps their types wherever JSON
+can represent them without loss. Integers, booleans, strings and doubles pass
+through unchanged. A `BIGINT` outside JavaScript's safe-integer range becomes a
+string, because `JSON.parse` would silently round it. `DuckDbExecutor` also
+stringifies `BigDecimal`, `HUGEINT`, dates, timestamps, arrays and structs,
+which JSON has no native form for.
 
 ### The row cap and paging
 
-`run-oql` and `run` cap a response at 1000 rows. The cap is applied by
-wrapping the whole statement as a subquery and putting `LIMIT`/`OFFSET`
-outside it — so a trailing `;`, a string literal containing `no limit
-here`, or a trailing `--` comment cannot defeat it. One visible consequence
-of the wrapping: duplicate output column names come back with DuckDB's
-de-duplicated labels (`name`, `name_1`).
+`run-oql` and `run` cap a response at 1000 rows. The cap wraps the whole
+statement as a subquery and puts `LIMIT`/`OFFSET` outside it, so a trailing
+`;`, a string literal containing `no limit here` or a trailing `--` comment
+cannot defeat it. One visible consequence is that duplicate output column
+names come back with DuckDB's de-duplicated labels (`name`, `name_1`).
 
-Both operations take an `offset` parameter (default `"0"`). A page's
+Both operations take an `offset` parameter (default `"0"`). `run-oql` also
+takes a `limit`, the page size, clamped to between 1 and 1000; a virtual data
+product's preview uses it to read only the rows an agent asked for. A page's
 payload carries:
 
 | Key | Meaning |
@@ -202,7 +211,7 @@ payload carries:
 | `rows` | Up to `pageSize` rows |
 | `rowCount` | Rows in **this page only** |
 | `offset` | The offset this page starts at |
-| `pageSize` | 1000 |
+| `pageSize` | 1000, or the smaller `limit` a `run-oql` caller asked for |
 | `hasMore` | Whether another page exists |
 | `truncated` | Alias of `hasMore` |
 | `elapsedMs` | Execution time |
@@ -218,6 +227,7 @@ The pipeline is reachable through the `query-engine` operator:
 | `run` | Execute raw SQL against the source tables and `int_` views, skipping OQL entirely; same cap, same `offset` |
 | `explain` | Return the view DDL the engine would materialise |
 | `catalog` | Return the mapping catalog the planner works from |
+| `cube-evidence` | The catalog with XSD types, profile statistics and tier-tagged join edges, which cube creation checks against |
 | `materialize-oql` | Execute and write the full, uncapped result to a file |
 | `materialize-product-sql` | Plain SQL over data products, uncapped, to a file. No GAV rewrite for a materialised product; a virtual product reached this way is bound as a live view over its expanded OQL |
 | `materialize-source-sql` | Plain SQL over the source tables, uncapped, to a file |
@@ -225,15 +235,15 @@ The pipeline is reachable through the `query-engine` operator:
 | `validate-constraint` | Check a SQL predicate against a class |
 | `verify-wrapper` | Run the [wrapper round-trip check](../query-engine/wrapper-optimisation.md) for a `datasetId`/`classIri`/`sql` triple |
 
-`run-oql` caps its response at 1000 rows. This stops a broad `SELECT` from
-producing an unbounded payload. `materialize-oql` is the uncapped path. It
-writes to a file instead of to the response.
+The 1000-row cap on `run-oql` stops a broad `SELECT` from producing an
+unbounded payload. `materialize-oql` is the uncapped path and writes to a file
+instead of the response.
 
 ## Related
 
-- [OQL syntax reference](../oql/syntax-reference.md) — what the parser accepts.
-- [SQL mode](../oql/sql-fallback.md) — going straight to the source tables or `int_` views.
-- [The two wrapper fields](./wrapper-fields.md) — which wrapper the executor actually reads.
-- [Typed columns and cost-based plans](../query-engine/typed-columns-and-costing.md) — the same pipeline described without the internals.
-- [Optimizable and opaque wrappers](../query-engine/wrapper-optimisation.md) — when the planner can see inside a wrapper.
-- [Referential evidence and join removal](../query-engine/referential-evidence.md) — the rewrite that drops a redundant join.
+- [OQL syntax reference](../oql/syntax-reference.md): what the parser accepts.
+- [SQL mode](../oql/sql-fallback.md): going straight to the source tables or `int_` views.
+- [The two wrapper fields](./wrapper-fields.md): which wrapper the executor actually reads.
+- [Typed columns and cost-based plans](../query-engine/typed-columns-and-costing.md): the same pipeline described without the internals.
+- [Optimizable and opaque wrappers](../query-engine/wrapper-optimisation.md): when the planner can see inside a wrapper.
+- [Referential evidence and join removal](../query-engine/referential-evidence.md): the rewrite that drops a redundant join.

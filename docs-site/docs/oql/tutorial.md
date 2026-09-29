@@ -6,9 +6,9 @@ description: 'Write a projection, then a path join, then a filtered join, agains
 # Diátaxis mode: tutorial
 ---
 
-By the end of this page, you will have written six queries. Each one adds one
-idea to the last. You will also know how to read a join out of the schema,
-instead of guessing at it.
+By the end of this page you will have written six queries, each adding one idea
+to the last, and you will know how to read a join out of the schema instead of
+guessing at it.
 
 ## Before you start
 
@@ -38,15 +38,14 @@ LIMIT 10
 
 Run it. You get titles and years.
 
-Notice what is **not** there: no `FROM`. With a single class, OQL infers it
-from the first projection that names a class. A projection that names no
-class cannot do that — `SELECT COUNT(*)` alone fails, while
-`SELECT COUNT(*) FROM IPaper` works. Notice also that there is no table
-called `IPaper` anywhere. `IPaper` is a view over two different files. You
-did not need to know that.
+There is no `FROM`. With a single class, OQL infers it from the first
+projection that names a class. A projection that names no class cannot do that:
+`SELECT COUNT(*)` alone fails, while `SELECT COUNT(*) FROM IPaper` works. There
+is also no table called `IPaper` anywhere. It is a view over two different
+files, and you did not need to know that.
 
-`LIMIT` is worth keeping on while exploring. Results are capped at 1000 rows
-regardless, but a small limit returns faster.
+Keep `LIMIT` on while exploring. Results are capped at 1000 rows regardless, but
+a small limit returns faster.
 
 ## 2. See everything
 
@@ -55,22 +54,21 @@ SELECT IPaper.*
 ```
 
 No `LIMIT` this time. Without an `ORDER BY` the order of rows is not
-defined, so the first thirty could all come from one source and hide the
+defined, so a limited result could come entirely from one source and hide the
 very thing this step is about. The walkthrough's data is 84 rows.
 
-Now the union is visible. Rows came from both the ACM CSV — 40 of them — and
-the Semantic Scholar JSON — 44. Two columns are patchy: `venue` is null for every Semantic
-Scholar row, and `citation_count` is null for every ACM row. Only one source
-contributes each column.
+Now the union is visible. Rows came from both the ACM CSV (40 of them) and the
+Semantic Scholar JSON (44). Two columns are patchy: `venue` is null for every
+Semantic Scholar row, and `citation_count` is null for every ACM row, because
+only one source contributes each column.
 
-That is the union working. A column that only one source has is null for rows
-from the other source. The union keeps the row. It does not drop it.
+A column that only one source has is null for rows from the other source. The
+union keeps those rows and does not drop them.
 
 ## 3. Traverse a relationship
 
-Papers know their authors' ids. The names live in another class. In SQL, you
-would now need to know which columns match. In OQL, you name the
-relationship:
+Papers know their authors' ids, but the names live in another class. In SQL you
+would need to know which columns match. In OQL you name the relationship:
 
 ```
 SELECT IPaper.title, Int_researchers.full_name
@@ -79,14 +77,14 @@ LIMIT 20
 ```
 
 `-[hasAuthor]->` is a **join property** declared in the schema. It already
-carries both classes and both key columns. So the planner builds the join
-from it.
+carries both classes and both key columns, so the planner builds the join from
+it.
 
-This is the first query that needs `FROM`. As soon as more than one class is
-involved, you must spell out the path.
+This is the first query that needs `FROM`: once more than one class is involved,
+you must spell out the path.
 
-A paper with three authors comes back as three rows. That is a property of
-the data, not a bug. You get one row per paper–author pair.
+A paper with three authors comes back as three rows, one per paper–author pair.
+That follows from the data and is not a bug.
 
 ## 4. Filter
 
@@ -109,8 +107,8 @@ FROM IPaper -[hasAuthor]-> Int_researchers
 WHERE IPaper.year > 2023
 ```
 
-Combine both filters. Remember that `AND` binds tighter than `OR`. Remember
-also that **there are no parentheses**:
+Combine both filters. `AND` binds tighter than `OR`, and **there are no
+parentheses**:
 
 ```
 SELECT IPaper.title, Int_researchers.full_name
@@ -133,8 +131,8 @@ the [syntax reference](./syntax-reference.md).
 
 `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX` are available. `COUNT(*)` counts rows.
 The others take one property, for example `AVG(Int_researchers.h_index)`.
-`MIN` and `MAX` also work over a text column — `MIN(IPaper.title)` returns
-the alphabetically first title in each group.
+`MIN` and `MAX` also work over a text column: `MIN(IPaper.title)` returns the
+alphabetically first title in each group.
 
 Sort by the count. Because the aggregate's output column belongs to no class, you
 order by its **bare alias**:
@@ -158,12 +156,12 @@ GROUP BY Int_researchers.affiliation
 HAVING COUNT(*) > 2
 ```
 
-Institutions whose researchers appear on more than two paper–author rows,
-counted across both source databases.
+The result lists institutions whose researchers appear on more than two
+paper–author rows, counted across both paper sources.
 
 :::warning `HAVING` takes `AND` only
-`WHERE` accepts `OR` between `AND` groups. `HAVING` does not. `HAVING` joins
-its predicates with `AND` only.
+`WHERE` accepts `OR` between `AND` groups. `HAVING` joins its predicates with
+`AND` only.
 :::
 
 ## What you have learned
@@ -180,14 +178,12 @@ its predicates with `AND` only.
 
 ## When OQL is not enough
 
-You will hit a limit fairly quickly. `COUNT(DISTINCT …)`, `CASE`, `LIKE`,
-subqueries, and parenthesised boolean logic are all outside the language. That
-is by design. The way out is
-[SQL mode](./sql-fallback.md). It queries the underlying views
-directly.
+`COUNT(DISTINCT …)`, `CASE`, `LIKE`, subqueries and parenthesised boolean logic
+are outside the language by design. [SQL mode](./sql-fallback.md) queries the
+underlying views directly when you need them.
 
 ## Next
 
-- [Cookbook](./cookbook.md) — worked patterns for real questions.
-- [Syntax reference](./syntax-reference.md) — everything the parser accepts.
-- [Cheat sheet](./cheat-sheet.md) — one page to keep open.
+- [Cookbook](./cookbook.md): worked patterns for real questions.
+- [Syntax reference](./syntax-reference.md): everything the parser accepts.
+- [Cheat sheet](./cheat-sheet.md): one page to keep open.

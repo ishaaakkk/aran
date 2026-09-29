@@ -7,8 +7,8 @@ description: 'What a JDBC client gets back for a date, a timestamp, a time zone 
 ---
 
 A JDBC client can read a date or a timestamp from Aran on all three schemas.
-This page says exactly what comes back, and which temporal types Aran does
-not support.
+This page lists what comes back and which temporal types Aran does not
+support.
 
 Everything below is for the Avatica remote driver, version 1.27.0. See
 [Connect a JDBC client](./jdbc.md) for the connection itself.
@@ -35,7 +35,7 @@ the value itself; the text form cannot carry sub-second precision today.
 
 `DatabaseMetaData.getColumns` reports every column of the `graph` and
 `sources` schemas as `VARCHAR`. That is not what a query returns. Those two
-schemas do not record column types — Aran learns a column's real type when
+schemas do not record column types, so Aran learns a column's real type when
 the query runs.
 
 `ResultSetMetaData` on an actual result is correct on every schema. A date
@@ -45,7 +45,7 @@ column reports `DATE` there, and gives you a date.
 materialised product's columns when it writes the snapshot, and a virtual
 product's columns when somebody creates it.
 
-A tool that plans its work from `getColumns` — a BI tool typically does —
+A tool that plans its work from `getColumns`, as a BI tool typically does,
 therefore treats a `graph` date as text. Run the query and read its metadata
 instead.
 
@@ -83,25 +83,24 @@ The product registry's `last_refreshed` column is a timestamp, and a client
 reads it like any other.
 
 It is `NULL` for a [virtual
-product](../deep-dives/virtual-data-products.md), as is `row_count`. That
-is correct rather than missing: a virtual product recomputes on every
-read, so there is no refresh to report.
+product](../deep-dives/virtual-data-products.md), as is `row_count`. Nothing
+is missing: a virtual product recomputes on every read, so there is no
+refresh to report.
 
 Its text form is whole seconds, as above. Do not use it to compare two
 refreshes within the same second.
 
 ## Known limitations
 
-- **A timestamp's text form loses sub-second precision.** The stored value
-  keeps it; `getString` does not show it.
-- **`getColumns` types are text on `graph` and `sources`.** Only the result
-  set knows the real type.
-- **A time-of-day column is unverified**, and is text on two of the three
-  schemas.
-- **A time zone does not survive into `graph` or `products`.**
+- A timestamp's text form loses sub-second precision. The stored value keeps
+  it, but `getString` does not show it.
+- `getColumns` types are text on `graph` and `sources`. Only the result set
+  knows the real type.
+- A time-of-day column is unverified, and is text on two of the three schemas.
+- A time zone does not survive into `graph` or `products`.
 
 ## Related
 
-- [Connect a JDBC client](./jdbc.md) — connecting, and the three schemas.
-- [Typed columns and cost-based plans](../query-engine/typed-columns-and-costing.md) — where an integrated column's type comes from.
-- [Materialised and virtual data products](../deep-dives/virtual-data-products.md) — why `last_refreshed` is empty for some products.
+- [Connect a JDBC client](./jdbc.md): connecting, and the three schemas.
+- [Typed columns and cost-based plans](../query-engine/typed-columns-and-costing.md): where an integrated column's type comes from.
+- [Materialised and virtual data products](../deep-dives/virtual-data-products.md): why `last_refreshed` is empty for some products.

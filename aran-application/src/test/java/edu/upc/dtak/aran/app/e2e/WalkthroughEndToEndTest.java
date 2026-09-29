@@ -110,24 +110,24 @@ class WalkthroughEndToEndTest {
 
     private static final Map<String, Query> QUERIES = new LinkedHashMap<>();
     static {
-        QUERIES.put("Q1 — The union, visible", new Query("SELECT IPaper.*",
+        QUERIES.put("Q1: The union", new Query("SELECT IPaper.*",
                 List.of("pid", "authorId", "title", "year", "venue", "citation_count"),
                 (rows, of) -> rows.stream().map(r -> row(r.pid, r.authorId, r.title, r.year,
                         r.venue, r.citationCount)).toList()));
-        QUERIES.put("Q2 — Traverse the join", new Query(
+        QUERIES.put("Q2: Traverse the join", new Query(
                 "SELECT IPaper.title, Int_researchers.full_name, Int_researchers.affiliation "
                         + "FROM IPaper -[hasAuthor]-> Int_researchers",
                 List.of("title", "full_name", "affiliation"),
                 (rows, of) -> rows.stream().map(r -> row(r.title, of.apply(r).fullName,
                         of.apply(r).affiliation)).toList()));
-        QUERIES.put("Q3 — Filter on the right-hand class", new Query(
+        QUERIES.put("Q3: Filter on the right-hand class", new Query(
                 "SELECT IPaper.title, IPaper.year, Int_researchers.full_name "
                         + "FROM IPaper -[hasAuthor]-> Int_researchers "
                         + "WHERE Int_researchers.affiliation = 'UPC'",
                 List.of("title", "year", "full_name"),
                 (rows, of) -> rows.stream().filter(r -> of.apply(r).affiliation.equals("UPC"))
                         .map(r -> row(r.title, r.year, of.apply(r).fullName)).toList()));
-        QUERIES.put("Q4 — Filter on the left-hand class", new Query(
+        QUERIES.put("Q4: Filter on the left-hand class", new Query(
                 "SELECT IPaper.title, Int_researchers.full_name, Int_researchers.affiliation "
                         + "FROM IPaper -[hasAuthor]-> Int_researchers "
                         + "WHERE IPaper.year > 2023",
@@ -135,7 +135,7 @@ class WalkthroughEndToEndTest {
                 (rows, of) -> rows.stream().filter(r -> r.year > 2023)
                         .map(r -> row(r.title, of.apply(r).fullName, of.apply(r).affiliation))
                         .toList()));
-        QUERIES.put("Q5 — An aggregate", new Query(
+        QUERIES.put("Q5: An aggregate", new Query(
                 "SELECT Int_researchers.affiliation, COUNT(*) AS paper_count "
                         + "FROM IPaper -[hasAuthor]-> Int_researchers "
                         + "GROUP BY Int_researchers.affiliation "
@@ -152,26 +152,26 @@ class WalkthroughEndToEndTest {
     @DisplayName("a reader following the walkthrough gets the rows Step 9 promises")
     void the_walkthrough_answers_q1_to_q5() throws Exception {
         // Step 3 — the three uploads, bootstrapped by the connectors the upload path uses.
-        assertThat(prose(section("Step 3 — Upload the three datasets")))
-                .contains("use `acm`, `semantic`, and `researchers`");
+        assertThat(prose(section("Step 3: Upload the three datasets")))
+                .contains("use `acm`, `semantic` and `researchers`");
         bootstrap("acm", "acm_papers.csv", new CsvConnector());
         bootstrap("semantic", "semantic_papers.json", new JsonConnector());
         bootstrap("researchers", "researchers.json", new JsonConnector());
 
         // Step 4 — the seeded Semantic Scholar wrapper still says what the page quotes.
-        String unnest = fencedBlocks(section("Step 4 — Enroll the datasets and check their wrappers"))
+        String unnest = fencedBlocks(section("Step 4: Enroll the datasets and check their wrappers"))
                 .get(0);
         assertThat(wrapperSqlOf(sourceGraph("semantic"))).contains(unnest);
 
         // Step 5 — the page's two alignment tables, as the Alignments view sends them.
         List<Map<String, String>> alignments = new ArrayList<>();
-        Table union = backtickTable(section("5a — Union the two paper sources into IPaper"));
+        Table union = backtickTable(section("5a: Union the two paper sources into IPaper"));
         for (List<String> r : union.rows()) {
             String kind = r.get(2);
             alignments.add(align(node(union.header().get(0), r.get(0), kind),
                     node(union.header().get(1), r.get(1), kind), r.get(3), kind));
         }
-        Table join = backtickTable(section("5b — Join the papers to their researchers"));
+        Table join = backtickTable(section("5b: Join the papers to their researchers"));
         assertThat(join.rows()).hasSize(1);
         List<String> j = join.rows().get(0);
         alignments.add(align(node(join.header().get(0), j.get(0), j.get(2)),
@@ -200,7 +200,7 @@ class WalkthroughEndToEndTest {
                 .as("the class the page's queries name").isEqualTo(PAGE_RESEARCHER_CLASS);
 
         // Step 8 — the page's constraints, enforced on the two integrated classes.
-        List<String> blocks = fencedBlocks(section("Step 8 — Add denial constraints"));
+        List<String> blocks = fencedBlocks(section("Step 8: Add denial constraints"));
         assertThat(blocks).as("one constraint block per class").hasSize(2);
         Map<String, List<String>> enforced = Map.of(
                 edge.leftClass(), lines(blocks.get(0)),

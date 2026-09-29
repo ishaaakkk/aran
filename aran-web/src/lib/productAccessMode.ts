@@ -17,8 +17,9 @@ export function accessModeOf(p: DataProduct): ProductAccessMode {
  * What each mode gives and gives up, in the words every screen uses (J6-F2). "Always fresh"
  * was false: a virtual read recomputes from whatever the active schema points at, which for an
  * upload is the file as of its last upload or refresh. What a virtual product gives up is named
- * too — the Iceberg catalog serves MATERIALIZED products only, an agent read ignores its row limit
- * (V37), and a query a schema change breaks leaves the product READY with failing reads.
+ * too — the Iceberg catalog serves MATERIALIZED products only, and a query a schema change breaks
+ * leaves the product READY with failing reads. An agent read takes its row limit like any other
+ * product's (the MCP tool clamps it to 500), so the row cap is not a virtual-mode cost.
  */
 export const ACCESS_MODE_COPY: Record<
   ProductAccessMode,
@@ -35,7 +36,7 @@ export const ACCESS_MODE_COPY: Record<
     title: 'Virtual — recomputed on every read from the sources the active schema points at; no stored snapshot',
     choice:
       'recomputed on every read from the sources the active schema points at — no stored ' +
-      'snapshot, heavier per query, not served over Iceberg, agent reads capped at 1,000 rows',
+      'snapshot, heavier per query, not served over Iceberg',
     previewHeader: 'recomputed now',
     rowFreshness: 'recomputed on read',
   },

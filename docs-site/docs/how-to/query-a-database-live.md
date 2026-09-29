@@ -1,7 +1,7 @@
 ---
 title: 'Query a database live'
 sidebar_label: 'Query a database live'
-description: 'Serve a PostgreSQL table from the live database instead of a snapshot, so every query reads the current rows.'
+description: 'Serve a PostgreSQL, MySQL or MariaDB table from the live database instead of a snapshot, so every query reads the current rows.'
 # Diátaxis mode: how-to
 ---
 
@@ -16,38 +16,42 @@ trade: it snapshots by construction and cannot be read live.
 :::note PostgreSQL, MySQL and MariaDB
 The steps use PostgreSQL. MySQL and MariaDB follow the same path: bootstrapping
 loads the vendor's JDBC driver, downloaded on first use. Each query attaches
-the database read-only, for all three engines — see
+the database read-only, for all three engines. See
 [Federated repositories](../repositories/relational-databases.md#federated-repositories).
 :::
 
-## The path is not the obvious one
+## Actions to avoid
 
-Two nearby actions do something else, and the repository flag reaches
-further than it looks.
+Two nearby actions do something else, and the repository flag affects more
+than the dataset you are creating.
 
-- The dataset list's bootstrap action refuses a dataset with no snapshot. A
-  federated dataset never has one. Use the **Alignments** view instead.
+- The dataset list's bootstrap action refuses a dataset with no snapshot, and
+  a federated dataset never has one. Use the **Alignments** view instead.
 - The dataset dialog's **Import from table** action **copies** the table into
-  the lake. It is the opposite of what this guide does.
-- **Federated Execution** applies to **every** dataset in the repository. A
-  table you imported earlier is then read live as well, and its lake copy is
-  ignored at query time. Set it before you register datasets under the
-  repository.
+  the lake, which is the opposite of what this guide does. The dialog offers
+  it for every engine whose table import is built, so it appears for these
+  three engines too.
+- **Federated Execution** applies to every dataset in the repository. A
+  table you imported earlier is then read live as well. Its lake copy serves
+  a query only when the dataset has an interval refresh and the copy is fresh
+  enough for the planner to choose it. Set the flag before you register
+  datasets under the repository.
 
 ## Steps
 
 1. **Mark the repository federated.**
-   Open **Repositories**, register or edit a PostgreSQL repository, and tick
-   **Federated Execution**. Fill in **Schema** if the table is not in
-   `public` — a blank schema reads `public`.
+   Open **Repositories**, register or edit a PostgreSQL, MySQL or MariaDB
+   repository, and tick **Federated Execution**. The checkbox appears only for
+   those three engines. For PostgreSQL, fill in **Schema** if the table is
+   not in `public`; a blank schema reads `public`.
 
 2. **Create a bare dataset named exactly for the remote table.**
    Click **Datasets → Register dataset**. Pick the project, then this repository.
-   Keep **Upload file** selected — do **not** pick **Import from table**.
+   Keep **Upload file** selected and do **not** pick **Import from table**.
    Type the remote table's name into **Name**. Attach **no file**. Save.
 
-   The name is not a label here. Aran reads the table of that name, and
-   queries scan the table of that name. A typo produces a dataset that
+   The name is not a label here: Aran reads the table of that name, and
+   queries scan it. A typo produces a dataset that
    bootstrapping cannot introspect.
 
 3. **Let it bootstrap.**
@@ -56,9 +60,10 @@ further than it looks.
    database, reads the table's columns from the catalog, and writes a source
    schema. It reads no rows.
 
-   To bootstrap it again later, open **Alignments**, select the project,
-   choose the dataset on either side, and click **Run Bootstrapping
-   Operator**.
+   If the schema was not read (the bootstrap failed), open **Alignments**,
+   select the project, choose the dataset on either side, and click **Read
+   schema from source**. To see whether the live table's shape has changed
+   since, click **Check for schema changes** in the dataset's detail panel.
 
 4. **Align, compile, and promote as usual.**
    Follow [Align and integrate
@@ -67,7 +72,7 @@ further than it looks.
 
 ## Confirm it is live
 
-Query the class. Then insert a row straight into the source database. Then
+Query the class, insert a row straight into the source database, and
 run the same query again, with no refresh and no re-bootstrap:
 
 ```
@@ -122,7 +127,8 @@ host therefore needs network access to the database, as the backend's does.
 | Symptom | Cause |
 | --- | --- |
 | *Dataset has no snapshot — upload data before bootstrapping* | The repository is not marked federated, or its engine has no live scanner. |
-| *No suitable driver* | The engine is not PostgreSQL. See the warning above. |
+| *could not load the `<ENGINE>` JDBC driver: …* | The backend could not download or verify the vendor driver. The detail gives the reason. See [Driver resolution](../deep-dives/driver-resolution.md). |
+| *the `<ENGINE>` driver did not accept the connection URL* | The host, port or database in the repository do not form a URL that engine's driver accepts. Check the repository fields. |
 | *Cannot bootstrap: dataset has no bound snapshot* | You used the dataset list's action. Use the Alignments view. |
 | The plan says `MATERIALIZED` | The repository is not marked federated, or its engine has no live scanner, or the repository is object storage and this dataset has a lake copy. Aran then serves the dataset from its lake copy. |
 | *Federated wrapper-output profiling failed for class …* in the backend log | FREYJA could not run its profiling pass against the database. Check that FREYJA's host can reach the database. Queries are unaffected: the class keeps the profiles of its last successful pass, or, if it has none, falls back to catalog statistics or to none. |
@@ -130,6 +136,6 @@ host therefore needs network access to the database, as the backend's does.
 
 ## Related
 
-- [Relational databases](../repositories/relational-databases.md) — every field, and which engines federate.
-- [Referential evidence and join removal](../query-engine/referential-evidence.md) — what Aran harvests from the same database.
-- [The query pipeline](../deep-dives/query-pipeline.mdx) — where the live scan replaces the snapshot read.
+- [Relational databases](../repositories/relational-databases.md): every field, and which engines federate.
+- [Referential evidence and join removal](../query-engine/referential-evidence.md): what Aran harvests from the same database.
+- [The query pipeline](../deep-dives/query-pipeline.mdx): where the live scan replaces the snapshot read.

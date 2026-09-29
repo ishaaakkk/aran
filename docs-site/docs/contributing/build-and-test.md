@@ -6,6 +6,10 @@ description: 'The commands for building, testing, and validating each part of th
 # Diátaxis mode: reference
 ---
 
+The commands to build, test and validate each part of the repository. Start
+with the gate: it is what a change must pass before merge, and it runs every
+other suite on this page.
+
 ## The gate
 
 ```bash
@@ -17,9 +21,9 @@ make bootstrap                     # once: every venv and node_modules the gate 
 
 A milestone is not done until the full gate is green. The part selectors
 combine (`--java --web`), work in either mode, and selecting none means all
-three — CI runs one job per part by calling the script this way. Any other
-argument prints the usage line, with the script named as you invoked it —
-`usage: ./scripts/validate.sh [--offline] [--java] [--web] [--python]` —
+three, and CI runs one job per part by calling the script this way. Any other
+argument prints the usage line, with the script named as you invoked it
+(`usage: ./scripts/validate.sh [--offline] [--java] [--web] [--python]`),
 and exits 2. A run limited to some parts ends with
 `VALIDATION (parts: …): GREEN — unselected parts were NOT run`, or offline
 with `VALIDATION (offline subset; parts: …): GREEN — unselected parts were NOT run`,
@@ -54,23 +58,24 @@ SKIPPED: browser e2e suite — RUN_E2E needs every part selected (drop the selec
 
 ### What the full gate runs
 
-1. `make build` — the bootable JAR, tests skipped
-2. `make test` — every Java test, Testcontainers included
-3. The query-engine perf benchmark — **only** when `RUN_PERF=1`; it closes
+1. `make build`: the bootable JAR, tests skipped
+2. `make test`: every Java test, Testcontainers included
+3. The query-engine perf benchmark, only when `RUN_PERF=1`. It closes
    the Java part, so it runs before the web and Python parts
 4. `aran-web`: `npm run build && npm run lint && npm test`
-5. `ruff check .` — one repo-root `ruff.toml` covers every Python tree
+5. `ruff check .`, where one repo-root `ruff.toml` covers every Python tree
 6. `aran-lake`: `pytest` from its own venv
 7. `freyja`: `pytest freyja/tests` from the lake's venv
 8. `aran-client`: `pytest` from its own venv
 9. `aran-mcp`: `pytest` from its own venv
 10. `tests/sidecar_contract`: the sidecar security contract, against every registered sidecar
-11. `tests/scripts`: the shell scripts that handle secrets, with `docker` replaced by a recorder
-12. The browser e2e suite — **only** when `RUN_E2E=1`
+11. `tests/dev_scripts`: the dev stack's stop path, run for real with `docker` stubbed and scratch ports
+12. `tests/scripts`: the shell scripts that handle secrets, with `docker` replaced by a recorder
+13. The browser e2e suite, only when `RUN_E2E=1`
 
 Before running anything, the gate checks every prerequisite of the selected
-parts — `aran-web/node_modules`; `aran-lake/.venv` with freyja's
-dependencies in it; `aran-client/.venv`; `aran-mcp/.venv` — and, if any is
+parts (`aran-web/node_modules`; `aran-lake/.venv` with freyja's
+dependencies in it; `aran-client/.venv`; `aran-mcp/.venv`) and, if any is
 missing, lists all of them at once, each with the make target that creates
 it, and exits 1. `make bootstrap` creates them all. When the lake venv exists
 but freyja does not import from it, the check prints the last lines of the
@@ -84,10 +89,10 @@ ruff not found — run 'make aran-lake-venv' (installs the pinned dev extras).
 
 ### What `--offline` runs
 
-The Java tests that need Docker carry `@Tag("docker")` — the
+The Java tests that need Docker carry `@Tag("docker")`: the
 `aran-application` integration tests, plus a few Garage/Postgres-backed
-operator tests — and the offline run excludes that tag. So it covers most of
-the codebase, not nothing:
+operator tests. The offline run excludes that tag, so it still covers most of
+the codebase:
 
 - `aran-core`
 - all three adapters
@@ -99,22 +104,26 @@ the codebase, not nothing:
   and the sidecar contract suite
 - `aran-client`'s tests
 - `aran-mcp`'s tests
+- `tests/dev_scripts` and `tests/scripts`
+
+It does not run the `aran-lake` suite, which needs Testcontainers, and it
+prints what it left out when it finishes.
 
 The prerequisite check applies offline too: a missing venv fails the run
 instead of silently dropping its suite. To validate only what is set up,
 select the parts you have.
 
-`RUN_PERF=1` works in **both** modes, unlike `RUN_E2E=1`. The browser suite genuinely needs
-Docker; the perf benchmark does not, so withholding it from the offline gate would withhold it
-from exactly the machines that can still run it.
+`RUN_PERF=1` works in both modes, unlike `RUN_E2E=1`. The browser suite needs
+Docker and the perf benchmark does not, so withholding the benchmark from the
+offline gate would withhold it from the machines that can still run it.
 
-The Docker-free part of `aran-application` is selected by **tag, not by a
-list of class names**. `BaseIntegrationTest` carries `@Tag("docker")`, and
-JUnit tags are inherited. So a new Docker-free test in that module is
-covered the day it is written. A test that forgets the tag *runs*, rather
-than vanishing — the safe direction to fail.
+The Docker-free part of `aran-application` is selected by tag, not by a
+list of class names. `BaseIntegrationTest` carries `@Tag("docker")`, and
+JUnit tags are inherited, so a new Docker-free test in that module is
+covered the day it is written. A test that forgets the tag runs instead of
+vanishing, which is the safe direction to fail.
 
-`--offline` is not a substitute for the full gate before merge.
+`--offline` does not replace the full gate before merge.
 
 ## Java
 
@@ -138,18 +147,18 @@ on the query engine.
 
 ## Performance suite
 
-The query engine has an in-process performance suite. It needs **no Docker** — it generates its
-own Parquet with DuckDB — and it runs in two tiers.
+The query engine has an in-process performance suite. It needs no Docker,
+because it generates its own Parquet with DuckDB, and it runs in two tiers.
 
-**The gate tier runs on every build**, as part of `:aran-operators:query-engine:test`. It asserts
+The gate tier runs on every build, as part of `:aran-operators:query-engine:test`. It asserts
 only things that do not depend on the machine: how many DDL statements a query builds, how many
 snapshots its resolver is asked for, how many views its SQL names, exact row counts over
-generated data, and plan shapes pinned to `src/test/resources/perf-goldens/`. **No wall-clock
-threshold is ever asserted.** A duration on a shared runner fails for reasons unrelated to the
-code.
+generated data, and plan shapes pinned to `src/test/resources/perf-goldens/`. No wall-clock
+threshold is ever asserted, because a duration on a shared runner fails for
+reasons unrelated to the code.
 
-**The benchmark tier is opt-in** and asserts nothing. It measures each phase of the pipeline —
-parse, plan, optimize, unparse, prune, prepare, execute — with warm-up and percentiles, and writes
+The benchmark tier is opt-in and asserts nothing. It measures each phase of the pipeline
+(parse, plan, optimize, unparse, prune, prepare, execute) with warm-up and percentiles, and writes
 a report.
 
 ```bash
@@ -168,12 +177,13 @@ make perf
 RUN_PERF=1 ./scripts/validate.sh --offline
 
 # The federated tier: snapshot vs the live attached Postgres read, same rows (needs Docker
-# and DuckDB extension downloads). Writes build/perf/federated-report.md with a derived
-# live/local cost ratio — the calibration input for aran.query.placement.live-lambda.
+# and DuckDB extension downloads). Writes aran-operators/query-engine/build/perf/federated-report.md
+# with a derived live/local cost ratio, the calibration input for
+# aran.query.placement.live-lambda.
 make perf-federated
 ```
 
-The benchmark grid also prices the optimizer's *decisions*, not only its phases: the
+The benchmark grid also prices the optimizer's decisions, as well as its phases: the
 `cbo-transpose` and `cbo-join-elimination` dimensions plan the same query over catalogs that
 differ in exactly one fact (a verified-unique key; a declared foreign key) and the report's scan
 counts show which plan the optimizer chose, next to what choosing cost. The `wrapper-cache`
@@ -204,8 +214,8 @@ in its environment block, so a saved report says what produced it.
 
 The numbers a run produces describe one machine on one afternoon and are not
 comparable with another's. The suite's real output is the defects it finds.
-It has already shown that planning cost rises with the product of join-path
-depth and union fan-in — deep enough, the planner exhausts the JVM heap —
+It has shown that planning cost rises with the product of join-path
+depth and union fan-in (deep enough, the planner exhausts the JVM heap),
 and that each enforced denial constraint adds planning cost to every query,
 whether or not the query touches its class.
 
@@ -218,15 +228,15 @@ npm run lint       # eslint
 npm run build      # tsc -b && vite build
 ```
 
-`make lint` from the root runs `npx tsc -b && npm run lint`. This is what CI
+`make lint` from the root runs `npx tsc -b && npm run lint`, which is what CI
 runs.
 
 ## Python
 
 Four Python trees ship. `aran-lake` and `freyja` share one virtual
-environment, on purpose; `aran-client` and `aran-mcp` each have their own —
-both are packages users install into their own environments, so neither may
-inherit the lake's pins.
+environment, on purpose. `aran-client` and `aran-mcp` each have their own,
+because both are packages users install into their own environments and
+neither may inherit the lake's pins.
 
 ```bash
 # Bootstrap the lake venv — Docker-free, returns immediately
@@ -252,7 +262,7 @@ cd aran-mcp && .venv/bin/python -m pytest -q
 PYTHONPATH=".:aran-lake/src" aran-lake/.venv/bin/python -m pytest tests/sidecar_contract -q
 ```
 
-`make aran-lake` is **not** the bootstrap command: it starts the lake's
+`make aran-lake` is not the bootstrap command: it starts the lake's
 Docker dependencies and then blocks on a `uvicorn --reload` dev server. Use
 `make aran-lake-venv` to bootstrap.
 
@@ -276,26 +286,26 @@ client subprocess), installs `aran-web`'s node modules if absent, and runs
 ```bash
 cd docs-site
 npm start            # dev server
-npm run validate     # build + link check + diagram check
+npm run validate     # build + link check + diagram check + prose check
 ```
 
 The diagram check drives a real browser, because Mermaid renders
-client-side. A broken diagram is invisible to both the build and the link
+client-side and a broken diagram is invisible to both the build and the link
 checker.
 
 ## Running the stack
 
 ```bash
 make all      # everything: infra, lake, freyja, backend, frontend
-make dev      # infra + backend only (no lake, no freyja)
+make dev      # infra, FREYJA (if aran-lake/.venv exists) and the backend; no lake
 make stop
 make health
-make clean       # stop, plus build outputs
+make clean       # stop, plus build outputs and aran-web/node_modules
 make clean-all   # plus the Python venv (~640 MB)
 ```
 
-`make dev` is faster, but gives a backend that cannot ingest, profile, or
-run join discovery — those need the two Python services.
+`make dev` is faster, but without the lake the backend cannot ingest, so
+there is nothing to profile or run join discovery on.
 
 ## When Docker is constrained
 

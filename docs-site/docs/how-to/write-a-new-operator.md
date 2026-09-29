@@ -6,9 +6,11 @@ description: 'Create an operator module, implement the Operator contract, and re
 # Diátaxis mode: how-to
 ---
 
-An operator is a platform capability with a stable contract. Adding one
-takes a Gradle module, a class, and two lines of wiring. There is no plugin
-descriptor, no registry to edit, and no classloader.
+An operator is a platform capability with a stable contract: bootstrapping,
+profiling and the query engine are all operators. Use this page when you add
+a capability of your own. It takes a Gradle module, a class, and two lines of
+wiring. There is no plugin descriptor, registry to edit or classloader
+involved.
 
 ## 1. Create the module
 
@@ -18,26 +20,25 @@ aran-operators/my-capability/
 ```
 
 ```groovy
+plugins {
+    id 'java-library'
+}
+
 dependencies {
     implementation project(':aran-core')
     implementation 'org.jspecify:jspecify'
     implementation 'org.springframework:spring-context'
-    implementation 'org.slf4j:slf4j-api'
-
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
-    testImplementation 'org.assertj:assertj-core:3.27.3'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
 }
 ```
 
-Depend on `aran-core` and nothing else of Aran's. If an operator needs
-another operator's output, it should take that output as a parameter or
-read it from a port. The modules cannot see each other — this is
-deliberate.
+The root `build.gradle` gives every module the rest: the Java toolchain, the
+Spring Boot dependency versions, `slf4j-api`, `spring-boot-starter-test` for
+JUnit 5 and AssertJ, and `useJUnitPlatform()`. Do not pin versions here.
+
+Depend on `aran-core` and nothing else of Aran's. The operator modules cannot
+see each other, by design, so an operator that needs
+another operator's output should take that output as a parameter or
+read it from a port.
 
 Add the module to `settings.gradle`:
 
@@ -75,8 +76,12 @@ public final class MyCapabilityOperator implements Operator {
 }
 ```
 
-`@Component` is the whole registration. Spring's component scanning finds
-it.
+`@Component` is the whole registration, because Spring's component scanning
+finds the class. The application scans only `edu.upc.dtak.aran.app` and
+`edu.upc.dtak.aran.operators`, so put the class in a package under
+`edu.upc.dtak.aran.operators` (for example
+`edu.upc.dtak.aran.operators.mycapability`). Anywhere else it compiles and is
+never registered.
 
 ### The request
 
@@ -88,12 +93,12 @@ record OperatorRequest(
     Map<String, String> parameters)
 ```
 
-**The tenant arrives explicitly.** Do not read it from ambient state.
-Operators run on job threads as well as request threads, so the request is
+The tenant arrives explicitly in the request. Do not read it from ambient state:
+operators run on job threads as well as request threads, so the request is
 the contract.
 
-**Parameters are always strings.** Numbers, booleans, and JSON all arrive as
-strings. You parse them yourself.
+Parameters are always strings. Numbers, booleans and JSON all arrive as
+strings, and you parse them yourself.
 
 ### The result
 
@@ -103,17 +108,17 @@ OperatorResult.failure("ERROR_CODE", "Human-readable explanation");
 ```
 
 A failure returns an error *code* as well as a message. The API surfaces
-this code, and a job row records it, so make the code stable and
+this code and a job row records it, so keep the code stable and
 machine-readable.
 
 Payloads are `Map<String, String>`. Put anything structured in as
-serialised JSON on one key. This is what the query engine does with its
+serialised JSON on one key, as the query engine does with its
 result sets.
 
 ## 3. Declare a manifest
 
-This step is optional, but do it anyway. The manifest is how callers
-discover your operation, and how the controller validates parameters
+This step is optional, but callers discover your operation through the
+manifest, and the controller uses it to validate parameters
 *before* your code runs.
 
 ```java
@@ -130,10 +135,13 @@ public OperatorManifest manifest() {
 ```
 
 The `true` on the second `OperationSpec` is `longRunning`. It tells callers
-to prefer `/submit` over `/invoke`. Set it honestly. It is the only signal a
-client has that a synchronous call will hang.
+to prefer `/submit` over `/invoke`. Set it accurately, because it is the only
+signal a client has that a synchronous call will hang.
 
-## 4. Report progress, if you have any
+Without a manifest override, the operator lists no operations and the
+controller checks no parameters for it.
+
+## 4. Report progress
 
 ```java
 @Override
@@ -147,13 +155,15 @@ public OperatorResult execute(OperatorRequest request, ProgressReporter progress
 }
 ```
 
-The default implementation ignores the reporter and delegates to the
-single-argument `execute`. So an operator with nothing true to say about
-its progress needs no change.
+This step is optional. The default implementation ignores the reporter and
+delegates to the single-argument `execute`, so an operator with nothing
+accurate to report about its progress needs no change. `ProgressReporter` has
+two methods: `stage(String)` names the phase just entered, and `percent(int)`
+takes 0 to 100. A job's event stream carries both.
 
-**Stages should be real phase boundaries**, not a decorative countdown.
-Only call `percent` when the number means something. An honest spinner
-beats a fabricated bar, and the UI already renders one.
+Make stages real phase boundaries, not a decorative countdown, and call
+`percent` only when the number means something. A fabricated bar is worse than the plain
+spinner the UI already renders.
 
 ## 5. Wire it into the application
 
@@ -164,12 +174,12 @@ runtimeOnly project(':aran-operators:my-capability')
 ```
 
 Use `runtimeOnly`, not `implementation`. The application compiles against
-the core's ports only. It must not reference your operator by type — that
-boundary keeps the hexagon intact.
+the core's ports only and must not reference your operator by type, which
+keeps the hexagonal boundary intact.
 
 ## 6. Test it
 
-Operator tests are plain JUnit against the class. You need no Spring
+Operator tests are plain JUnit against the class, with no Spring
 context:
 
 1. Build an `OperatorRequest`.
@@ -178,9 +188,8 @@ context:
 
 Keep any security-relevant guard package-private rather than private, so a
 test can drive its inputs directly. The query engine's read-only SQL guard
-is written this way for exactly this reason. A boundary reachable only
-through a full invocation with a live catalog is a boundary that never gets
-tested.
+is written this way. A boundary reachable only through a full invocation
+with a live catalog tends never to be tested.
 
 ## Calling it
 
@@ -197,15 +206,16 @@ Nothing else needs to change. See
 
 - [ ] Module depends on `aran-core` only
 - [ ] Listed in `settings.gradle`
+- [ ] Class in a package under `edu.upc.dtak.aran.operators`
 - [ ] `@Component` on the class
 - [ ] `runtimeOnly` in `aran-application/build.gradle`
 - [ ] Unknown operations return `UNSUPPORTED_OPERATION`, not an exception
 - [ ] Manifest declares every operation and parameter
-- [ ] `longRunning` set honestly
+- [ ] `longRunning` set accurately
 - [ ] Tenant read from the request, never from ambient state
 - [ ] Error codes stable and machine-readable
 
 ## Related
 
-- [Module layout](../contributing/module-layout.md) — the dependency rules.
-- [Architecture](../overview/architecture.mdx) — why the boundary is shaped this way.
+- [Module layout](../contributing/module-layout.md): the dependency rules.
+- [Architecture](../overview/architecture.mdx): why the boundary is shaped this way.

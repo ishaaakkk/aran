@@ -6,9 +6,9 @@ description: 'Reading materialised data products from Iceberg-speaking engines �
 # Diátaxis mode: reference
 ---
 
-Aran serves its **materialised data products** as Apache Iceberg tables,
-through a read-only Iceberg REST catalog. Its catalog URI — the base a
-client appends `/v1/…` to — is:
+Aran serves its **materialised data products** as Apache Iceberg tables
+through a read-only Iceberg REST catalog. The catalog URI, the base a client
+appends `/v1/…` to, is:
 
 ```
 https://<your-aran-host>/api/iceberg
@@ -22,44 +22,67 @@ holding one table per materialised product, under the same table names the
 the **Data products** screen shows its table name and this deployment's
 catalog URI, or why the product is not served.
 
-**What has been verified.** Two clients read this catalog end to end, over
-HTTP against a running Aran, in its integration test suite: **DuckDB 1.5.5**
-(both recipes below) and **iceberg-core 1.7.1's `RESTCatalog`** (Java). Not
-yet watched: a real deployment over HTTPS behind a proxy, reads at scale,
-and any other engine, Spark and Trino included.
+Two clients read this catalog end to end over HTTP against a running Aran in
+its integration tests: **DuckDB 1.5.5** (both recipes below) and
+**iceberg-core 1.7.1's `RESTCatalog`** (Java). Nobody has yet watched a real
+deployment over HTTPS behind a proxy, reads at scale, or any other engine,
+Spark and Trino included. See the [status page](../overview/status.md) for
+what else is untested.
 
-## What is served, and what is not
+## What is served
 
 | Product | Served? |
 | --- | --- |
-| Materialised, refreshed at least once, schema recorded | **Yes** — as an Iceberg v2 table pinned to its latest snapshot. |
-| Virtual | **No, by design.** A virtual product has no files; its rows exist only when Aran expands its query at read time. Serving static Iceberg metadata for it would silently freeze semantics the product was created to avoid. Read virtual products over [JDBC](./jdbc.md) or [MCP](./mcp.md). |
-| Draft, failed, or never materialised | No — there is no data to point at. |
+| Materialised, refreshed at least once, schema recorded | **Yes**, as an Iceberg v2 table pinned to its latest snapshot. |
+| Virtual | **No.** A virtual product has no files: its rows exist only when Aran expands its query at read time, and static Iceberg metadata would freeze them. Read virtual products over [JDBC](./jdbc.md) or [MCP](./mcp.md). |
+| Draft, failed, or never materialised | No. There is no data to point at. |
 
 A product refresh moves the table to the new snapshot. Clients holding old
 metadata get a clean 404 and recover by re-loading the table through the
 catalog.
 
+Each table's metadata carries a `schema.name-mapping.default` property. The
+parquet Aran writes has no Iceberg field ids, so a reader matches columns by
+name through that mapping.
+
+## Routes
+
+| Method | Path | Answers |
+| --- | --- | --- |
+| `GET` | `/api/iceberg/v1/config` | The protocol's configuration, with no overrides |
+| `GET` | `/api/iceberg/v1/namespaces` | The one namespace, `products` |
+| `GET` | `/api/iceberg/v1/namespaces/products` | That namespace |
+| `GET` | `/api/iceberg/v1/namespaces/products/tables` | One entry per served product |
+| `GET`, `HEAD` | `/api/iceberg/v1/namespaces/products/tables/<name>` | The table, including its `metadata-location` |
+| `GET` | `/api/iceberg/files/<product-id>/<snapshot-id>/metadata/<file>` | The metadata file and manifests |
+| `GET` | `/api/iceberg/files/<product-id>/<snapshot-id>/data/data.parquet` | The product's rows |
+
+Any other namespace or table answers 404. A file route answers 404 unless the
+product belongs to the caller's tenant and the snapshot in the path is the
+product's current one. Reads of the data file count against the tenant's
+egress ceiling, as JDBC statements and exports do. See [Licensing
+modes](../deep-dives/licensing-modes.md).
+
 ## Every byte comes from Aran
 
 Iceberg engines normally read data files straight from object storage. Aran's
-catalog deliberately does not work that way: every location in the served
-metadata — the metadata file, the manifests, the parquet itself — points back
-at Aran's own authenticated `/api/iceberg/files/…` endpoint. No storage URL
-or credential ever reaches a client, and revoking the API token revokes the
-data. The trade-off is equally deliberate: reads flow through Aran, so this
-surface buys protocol compatibility, not direct-to-storage throughput.
+catalog does not. Every location in the served metadata (the metadata file,
+the manifests and the parquet) points back at Aran's own authenticated
+`/api/iceberg/files/…` endpoint. No storage URL or credential reaches a
+client, and revoking the API token revokes access to the data. The cost is
+that reads flow through Aran, so you get protocol compatibility rather than
+direct-to-storage throughput.
 
-It also decides which engines can use it: an engine must be able to fetch
-`https://` file locations with the token attached. That is an HTTP file
-reader with a bearer header — not something every Iceberg engine has.
+This also limits which engines can use the catalog. An engine must fetch
+`https://` file locations with the token attached, which means an HTTP file
+reader with a bearer header. Not every Iceberg engine has one.
 
 ## Authentication
 
 The same [API token](./index.md) as every other surface, sent as a bearer
 token on **both** the catalog calls and the file reads. `READ` scope is
-enough — the catalog is read-only by construction (only GET and HEAD exist;
-there is nothing to which a write could be sent).
+enough. The catalog only implements GET and HEAD, so there is nothing to send
+a write to.
 
 ## DuckDB
 
@@ -82,10 +105,11 @@ ATTACH 'aran' AS aran (
 SELECT * FROM aran.products.papers_per_year;
 ```
 
-Both statements are needed. `TOKEN` authenticates only the catalog calls;
-the manifests and the parquet are plain httpfs reads, which answer 401
-without the HTTP secret. `ENDPOINT` stops before `/v1` — DuckDB appends it
-itself, so `…/api/iceberg/v1` asks for `/v1/v1/config` and fails with 404.
+You need both the secret and the `ATTACH`. `TOKEN` authenticates only the
+catalog calls, and the manifests and parquet are plain httpfs reads that
+answer 401 without the HTTP secret. `ENDPOINT` stops before `/v1` because
+DuckDB appends it: `…/api/iceberg/v1` asks for `/v1/v1/config` and fails with
+404.
 
 Without the `ATTACH`, a single table reads with `iceberg_scan` on the
 `metadata-location` the catalog returns for it
@@ -111,22 +135,22 @@ catalog.initialize("aran", Map.of(
 Table table = catalog.loadTable(TableIdentifier.of("products", "papers_per_year"));
 ```
 
-The `token` covers the catalog calls. iceberg-core ships **no** `FileIO` for
+The `token` covers the catalog calls. iceberg-core ships no `FileIO` for
 `http(s)://` locations, so reading the manifests and the parquet needs one
 that performs an HTTP GET with the same bearer header, named in `io-impl`.
-Aran does not ship one; the one its integration test uses is short.
+Aran does not ship one. The one its integration test uses is short.
 
 ## PyIceberg: not supported
 
-PyIceberg (0.12) ships **no FileIO for `https://`** — opening such a
-location fails with *Unrecognized filesystem type in URI: https*. Every file
-location Aran serves is under its own `https://` origin, so without a custom
-`py-io-impl` that sends the bearer token on each GET, PyIceberg cannot read a
-product. Aran does not ship one, and no PyIceberg client has been run against
-this catalog. From Python, use the [Python SDK](./python-sdk.md) or DuckDB's
+PyIceberg (0.12) ships no FileIO for `https://`, so opening such a location
+fails with *Unrecognized filesystem type in URI: https*. Every file location
+Aran serves is under its own `https://` origin, so PyIceberg cannot read a
+product without a custom `py-io-impl` that sends the bearer token on each GET.
+Aran does not ship one, and no PyIceberg client has been run against this
+catalog. From Python, use the [Python SDK](./python-sdk.md) or DuckDB's
 Python package with the recipe above.
 
-## When to use which surface
+## Choosing a surface
 
 | You want | Use |
 | --- | --- |

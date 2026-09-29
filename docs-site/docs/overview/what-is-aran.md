@@ -2,126 +2,82 @@
 title: 'What is Aran'
 sidebar_label: 'What is Aran'
 sidebar_position: 1
-description: 'What the Aran platform does, the problem it addresses, and what is and is not implemented today.'
+description: 'What Aran does, the problem it addresses, how it approaches it, and what it is not.'
 # Diátaxis mode: explanation
 ---
 
-Aran is a data integration platform. It takes several data sources that
-were never designed to work together and derives a schema for each one. You
-declare how the schemas relate to each other. From that declaration, Aran
+Aran is a data integration platform for sources that were never designed to
+work together. It derives a schema for each source, proposes how the sources
+join, and lets you declare how their schemas relate. From that declaration it
 builds one queryable vocabulary.
 
-Aran comes from more than a decade of data integration research at UPC
-(Universitat Politècnica de Catalunya). The name comes from the Val d'Aran in
-the Catalan Pyrenees: *aran* is the old Pyrenean word for *valley*, the place
-where many streams meet.
+A single query can then return rows from a CSV file, a JSON file and a
+PostgreSQL table, and the query names none of the three.
 
-One query can then return rows from a CSV file, a JSON API, and a PostgreSQL
-table. The query never names any of the three.
+The name comes from the Val d'Aran in the Catalan Pyrenees. *Aran* is the old
+Pyrenean word for *valley*, a place where many streams meet. The platform grew
+out of more than a decade of data integration research at the Universitat
+Politècnica de Catalunya (UPC).
 
-## The problem it addresses
+## The problem
 
 Two organisations rarely describe the same thing the same way. One names a
 column `author_id`. Another nests the same identifier inside an `authors`
-array. One publishes CSV. Another publishes JSON. Neither is wrong, and
-neither will change for you.
+array. One publishes CSV and the other JSON, and neither will change for you.
 
-The usual answer is an ETL pipeline. You write transformation code for each
-source. You load everything into a warehouse. You maintain that code forever.
-This works, but the integration logic now lives in a program. Nothing can
-inspect that program, suggest a change to it, or tell you when a source has
-changed shape underneath it.
+The usual answer is an ETL pipeline: transformation code for each source,
+loaded into a warehouse and maintained indefinitely. That works, but the
+integration logic now lives in a program. Nothing can inspect it, suggest a
+change to it, or tell you when a source has changed shape underneath it.
 
-Aran takes a different route. It **declares the integration as data**: a
-graph of classes and properties, with mappings from each source's own
-vocabulary onto a shared one. Aran derives the first draft of this graph
-automatically. It inspects the sources and proposes the relationships it
-finds. It then compiles the whole graph into executable SQL. Because the
-integration is a graph, you can query it and compare two versions of it. You
-can keep a history of every version, and detect when it no longer matches the
-sources.
+## The approach
 
-## What it does, concretely
+Aran stores the integration as data. It is a graph of classes and properties,
+with mappings from each source's vocabulary onto a shared one. Aran drafts the
+first version by inspecting the sources and proposing the relationships it
+finds. It then compiles the graph into SQL.
 
-1. **Registers repositories.** A connection to a PostgreSQL database, an S3
-   bucket, a Singer tap, an Iceberg catalog. See
-   [Data repositories](../repositories/index.md) for what each type supports.
-2. **Ingests datasets.** Aran snapshots each supported source into its own
-   lake. Later stages read the snapshot cheaply, as many times as they need.
-3. **Bootstraps a schema.** The bootstrapping operator reads a snapshot. It
-   emits an RDF description of the snapshot: one class per record type, one
-   property per field. It also emits the SQL needed to read the snapshot
-   back.
-4. **Profiles the data.** The FREYJA sidecar computes statistics for each
-   column: distinct values, uniqueness, value domains. These statistics
-   drive join suggestions. They also drive the cost estimates the query
-   optimiser uses.
-5. **Proposes joins.** Join discovery compares column profiles across
-   datasets. It proposes a relationship wherever two value domains overlap.
-6. **Integrates schemas.** You map source properties onto global properties.
-   You group these global properties into integrated classes. Aran unions
-   two sources mapped to the same integrated class. A join property links
-   two different classes.
-7. **Answers queries.** You write [OQL](../oql/index.md) queries against the
-   integrated classes. The query engine plans each query with Apache
-   Calcite. It executes the query on DuckDB.
+Because the integration is a graph, you can query it and compare two versions.
+Aran keeps every promoted version, and it detects when a source no longer
+matches.
 
-## What is implemented today
+## What it does
 
-This documentation describes what the code does now. It does not describe
-the roadmap. Two distinctions matter most:
+| | Capability | In one line |
+| --- | --- | --- |
+| 1 | [Connect](../capabilities/connect.md) | Register files, databases, object storage, Iceberg catalogs and Singer taps. [Data repositories](../repositories/index.md) says what each type supports. |
+| 2 | [Derive and profile](../capabilities/derive-and-profile.md) | Generate a schema, a SQL wrapper and column statistics from the data. The statistics drive join suggestions and the optimiser's cost estimates. |
+| 3 | [Align and version](../capabilities/align-and-version.md) | Accept join proposals, map onto one vocabulary, promote and roll back versions. |
+| 4 | [Query](../capabilities/query.md) | Run [OQL](../oql/index.md) across all sources. Calcite plans the query and DuckDB runs it. |
+| 5 | [Serve](../capabilities/serve.md) | Save a query as a data product and read it over JDBC, Iceberg REST or MCP. Scripts and notebooks run OQL over REST or the Python SDK. |
 
-**Connecting is not ingesting.** You can configure and test the connection
-for every repository type. The depth of that test varies by type. Getting
-data *in* requires a connector, and every repository type has one:
+Queries normally run over snapshots in Aran's lake. A PostgreSQL, MySQL or
+MariaDB repository flagged `federated` is read live instead: DuckDB attaches the
+database read-only. The tables of an Iceberg REST catalog are read live too,
+unless a dataset has been copied into the lake. No other source type has a live
+path a user can reach.
 
-- `FILE_SYSTEM`: upload a CSV, JSON, or Parquet file.
-- `RELATIONAL_DB`: upload a file, or pull a table over the import API.
-  The import works for every relational engine except HBase. The
-  **Import from table** dialog offers it for PostgreSQL only today. Other
-  engines need a direct API call.
-- `OBJECT_STORAGE`: upload a file. The engine can also read bucket objects
-  over DuckDB's httpfs, but no endpoint or button registers a dataset from a
-  bucket yet. See [Object storage](../repositories/object-storage.md).
-- `SINGER_TAP`: pull a SaaS API by running a Singer tap the operator
-  installed and allowlisted. With no tap configured, this type cannot be
-  registered.
-- `ICEBERG_REST`: read a table of an Iceberg REST catalog live, or copy it
-  into the lake. This type has not yet run against a real external catalog.
-  See [Iceberg REST catalogs](../repositories/iceberg-rest-catalogs.md).
+## What it is not
 
-There is no document-store, cache or generic web-API type. To integrate
-such data today, export it to a file and upload it under a `FILE_SYSTEM`
-repository. For a SaaS API, use a Singer tap.
-The [capability table](../repositories/index.md) states what each type
-supports.
+- **Not a data warehouse.** The lake holds snapshots so the pipeline has a
+  stable copy to read. It is not long-term storage.
+- **Not a scheduler.** A job runs once, for one dataset or one integration run.
+  You can set a refresh policy on an imported dataset, and that is the only recurring work.
+- **Not a BI tool.** Aran answers queries and exports rows. It does not chart them, and BI tools can connect to it over JDBC.
 
-**Snapshots are the normal execution path.** Queries usually run over
-snapshots held in the lake. A relational repository flagged `federated` is
-read live through DuckDB, which attaches the PostgreSQL, MySQL or MariaDB
-database read-only. The tables of an Iceberg REST catalog can be read live
-too. The query engine also carries a live `s3://` read for object storage,
-but no user path reaches it yet. No other engine or source type has a live
-path.
-
-Aran is also multi-tenant. Each tenant's data, schema graph, and
-integration models are isolated from every other tenant's. The persistence
-layer enforces this isolation. See
+Aran is also multi-tenant. Each tenant's data, schema graph and integration
+models are isolated, and the persistence layer enforces it. See
 [Multi-tenancy](../deep-dives/multi-tenancy.md).
 
-## What Aran is not
+## How far it has been tested
 
-- **Not a data warehouse.** Aran does not store your data long-term. The
-  lake holds snapshots so the pipeline has something stable to read.
-- **Not an ETL scheduler.** Aran has no schedule of recurring
-  transformations. A job runs once, for one dataset or one integration run.
-- **Not a BI tool.** Aran answers queries and exports the results. It does
-  not chart them.
+Aran is pre-1.0. Some source types and features are verified against real
+services and others are preview. The [status and limitations](./status.md) page
+lists which is which.
 
-## Where to go next
+## Next
 
-- [Core concepts](./core-concepts.md): the vocabulary the rest of the
-  documentation assumes.
-- [Architecture](./architecture.mdx): what runs where, and why the modules are
-  split the way they are.
-- [Quickstart](../getting-started/quickstart.md): get an instance running.
+- [Why Aran](./why-aran.md): when it fits and when it does not.
+- [Core concepts](./core-concepts.md): the vocabulary the docs use.
+- [Architecture](./architecture.mdx): what runs where, and why the modules are split as they are.
+- [Quickstart](../getting-started/quickstart.md): run an instance.

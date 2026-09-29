@@ -6,7 +6,10 @@ description: 'Call an operator through the REST API, pass its parameters, and fo
 # Diátaxis mode: how-to
 ---
 
-This page is for calling operators yourself; the UI calls them for you.
+Every capability in Aran (bootstrapping, profiling, join discovery,
+constraint discovery, schema integration, querying) is an operator behind one
+REST shape. Use this page when you script those capabilities yourself; the UI
+calls the same endpoints for you.
 
 ## Discover what is available
 
@@ -17,8 +20,8 @@ Authorization: Bearer <token>
 
 This returns every registered operator as a **manifest**. Each manifest
 lists the operator's id, display name, and one entry per operation, with
-that operation's parameter schema. Manifests are self-describing, so this
-list is authoritative — this documentation is not.
+that operation's parameter schema. Manifests describe themselves, so this
+list is authoritative and this documentation is not.
 
 The operators that ship today:
 
@@ -29,16 +32,16 @@ The operators that ship today:
 | `join-discovery` | `ping`, `discover` |
 | `constraint-discovery` | `ping`, `discover` |
 | `schema-integration` | `ping`, `compile`, `incremental-integrate`, `suggest-alignments` |
-| `mapping-catalog` | `default` — catalog derivation |
-| `query-engine` | `catalog`, `explain`, `run`, `rewrite-oql`, `run-oql`, `validate-constraint`, `verify-wrapper`, `materialize-oql`, `preview-parquet`, `materialize-product-sql`, `materialize-source-sql` |
+| `mapping-catalog` | `default` (catalog derivation) |
+| `query-engine` | `catalog`, `cube-evidence`, `explain`, `run`, `rewrite-oql`, `run-oql`, `validate-constraint`, `verify-wrapper`, `materialize-oql`, `preview-parquet`, `materialize-product-sql`, `materialize-source-sql` |
 
 The three least obvious `query-engine` operations:
 
-- **`verify-wrapper`** — checks whether a candidate wrapper SQL round-trips
+- `verify-wrapper` checks whether a candidate wrapper SQL round-trips
   and could be planned expanded. All three parameters are required strings:
   `datasetId` (the dataset the wrapper reads from), `classIri` (the
   integrated class IRI the wrapper is a source of), and `sql` (the
-  candidate text, referencing `${SNAPSHOT}`). It persists nothing — the
+  candidate text, referencing `${SNAPSHOT}`). It persists nothing: the
   verdict is returned, not written to the model.
 
   ```http
@@ -50,22 +53,22 @@ The three least obvious `query-engine` operations:
     "operation": "verify-wrapper",
     "parameters": {
       "datasetId": "5f2c8b41-0000-4000-8000-000000000001",
-      "classIri":  "http://aran/int#Paper",
+      "classIri":  "http://www.essi.upc.edu/DTIM/NextiaDI/integration/Paper",
       "sql":       "SELECT * FROM ${SNAPSHOT} WHERE year > 2000"
     }
   }
   ```
 
-- **`materialize-product-sql`** — runs a SQL SELECT over the `products`
+- `materialize-product-sql` runs a SQL SELECT over the `products`
   schema (required parameter: `sql`) and returns `data.path` (a
   server-local temp parquet) and `data.rowCount`. This is the operation
   the JDBC `products` route drives.
-- **`materialize-source-sql`** — the same contract over the `sources`
-  schema; drives the JDBC `sources` route.
+- `materialize-source-sql` has the same contract over the `sources`
+  schema and drives the JDBC `sources` route.
 
 ## Choose invoke or submit
 
-Two endpoints share the same body.
+Two endpoints take the same body.
 
 ```http
 POST /api/operators/{operatorId}/invoke    # synchronous, result in the response
@@ -83,12 +86,14 @@ These operations are long-running: `bootstrap`, `profile`,
 
 ## Token scope decides which endpoint you can reach
 
-A `READ`-scoped token can POST **only** `/api/operators/query-engine/invoke`
-— every `query-engine` operation is allowed there, and nothing else is:
+A `READ`-scoped token can POST **only** `/api/operators/query-engine/invoke`,
+and there only the operations Aran classifies as reads. Today that is every
+`query-engine` operation in the table above. An operation added later is
+refused to a READ token until it is classified. Nothing else is allowed:
 
 - `/submit` on any operator, `query-engine` included, answers 403
   *This API token is read-only.*
-- Any operation on any other operator — even a `ping` — is refused with
+- Any operation on any other operator, even a `ping`, is refused with
   *a READ-scope API token cannot invoke '…' on \<operator\>*.
 - No token of any scope reaches `/api/tenant/members`, `/api/tenant/admin`,
   `/api/admin`, `/api/tokens`, or a tenant owner's membership routes —
@@ -121,12 +126,14 @@ parameter is a string that contains JSON, not a nested object.
 | Response | Meaning |
 | --- | --- |
 | `200` | `success: true`, payload on `data` |
-| `422` | The operator returned a failure — read `errorCode` and `errorMessage`. An unknown **operator id** also lands here, as `OPERATOR_NOT_FOUND` |
+| `400` | A required parameter is missing or blank |
+| `403` | The token's scope does not cover the route or the operation |
+| `422` | The operator returned a failure: read `errorCode` and `errorMessage`. An unknown **operator id** also lands here, as `OPERATOR_NOT_FOUND` |
 | `404` | Unknown operator id on `/submit` only |
 
 Aran checks required parameters before the operator runs: a missing or
-blank required parameter fails without side effects. That is the whole
-check — no type checking, no rejection of unknown parameters, and an
+blank required parameter fails with `400` and without side effects. That is the whole
+check. Aran does not check types or reject unknown parameters, and an
 operation name the manifest does not list skips validation entirely.
 
 :::note You cannot set the tenant
@@ -146,9 +153,10 @@ Content-Type: application/json
 }
 ```
 
-This returns a job id immediately. Include `projectId` when you have one —
-Aran files the job under it. An unparseable `projectId` is silently
-ignored, not an error, so a typo files the job under no project.
+This returns `202` with `{"jobId": "…"}` immediately. Include `projectId`
+when you have one, and Aran files the job under it. Aran ignores an
+unparseable `projectId` without an error, so a typo files the job under no
+project.
 
 Then either poll:
 
@@ -156,24 +164,24 @@ Then either poll:
 GET /api/jobs/{jobId}
 ```
 
-The fields that matter are `status` (`SUCCEEDED`, `FAILED`, `CANCELLED`
-are terminal) and `errorMessage`. Or subscribe to the event stream:
+The fields that matter are `status` (`PENDING` and `RUNNING` while it
+works; `SUCCEEDED`, `FAILED` and `CANCELLED` are terminal) and
+`errorMessage`. Or subscribe to the event stream:
 
 ```http
 GET /api/jobs/{jobId}/events
 Accept: text/event-stream
 ```
 
-The stream carries stage changes as the operator reports them —
-"downloading snapshot", "building lattice". When an operator fails, it
-fails the job and carries its `errorCode` onto the job row, instead of
-burying the code in a log.
+The stream carries stage changes as the operator reports them, such as
+"downloading snapshot" and "building lattice". When an operator fails, it
+fails the job and carries its `errorCode` onto the job row.
 
-## `ping` proves registration, not health
+## What `ping` tells you
 
 Four operators expose `ping`: `bootstrapping`, `join-discovery`,
 `schema-integration`, and `constraint-discovery`. `profiling` and
-`query-engine` do not — `ping` on `profiling` returns
+`query-engine` do not, and `ping` on `profiling` returns
 `UNSUPPORTED_OPERATION`.
 
 Every `ping` that exists returns a hardcoded constant and contacts
@@ -185,27 +193,31 @@ nothing:
             "message": "Join Discovery service operational" } }
 ```
 
-It tells you the operator is registered — never whether FREYJA, the lake,
-or anything else is reachable. To check FREYJA before a long job, use the
+It tells you the operator is registered, and nothing about whether FREYJA,
+the lake, or anything else is reachable. To check FREYJA before a long job, use the
 real health probes instead:
 
-- `GET /actuator/health` — public, no credential; carries a `freyja`
-  indicator that performs a real `GET /health` against the sidecar.
-- `GET /api/tenant/admin/system` — owner-gated (interactive session only;
-  no API token reaches it); returns `{version, commit, status,
+- `GET /actuator/health` on the management port (`8082` by default,
+  `ARAN_MANAGEMENT_PORT`) needs no credential and carries a `freyja`
+  indicator that performs a real `GET /health` against the sidecar. The
+  standalone compose stack does not publish that port to the host, so there
+  you call it from inside the container.
+- `GET /api/tenant/admin/system` is owner-gated (interactive session only;
+  no API token reaches it) and returns `{version, commit, status,
   components[{name, status, details}]}` with broken components first.
 
 ## Authenticating without a browser
 
-For scripts, mint an **API token** rather than reuse a browser session.
-Manage them under your avatar (bottom of the left rail) → **API Tokens**, or over
-[the token REST API](../programmatic-access/index.md#manage-tokens-over-rest)
-— which itself requires an interactive session. Send the token as a bearer
+For scripts, mint an **API token** instead of reusing a browser session.
+Manage tokens under your avatar (bottom of the left rail) → **API Tokens**,
+or over
+[the token REST API](../programmatic-access/index.md#manage-tokens-over-rest),
+which itself requires an interactive session. Send the token as a bearer
 token, exactly as shown above, and mind the
 [scope rules](#token-scope-decides-which-endpoint-you-can-reach).
 
 ## Related
 
-- [Write a new operator](./write-a-new-operator.md) — adding one of your own.
+- [Write a new operator](./write-a-new-operator.md): adding one of your own.
 - The per-capability guides in this section, which use these endpoints for a
   specific task.

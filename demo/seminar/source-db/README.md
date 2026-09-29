@@ -1,13 +1,13 @@
 # Demo relational sources
 
 Two schemas in one Postgres container, standing for two independent
-institutional systems. With them, the seminar demo integrates **relational
-databases with files**, not only files with each other.
+institutional systems. With them, the seminar demo integrates relational
+databases with files, and not only files with each other.
 
 | Schema | Stands for | Tables | Role in the integration |
 |---|---|---|---|
-| `registry` | A university CRIS (research information system) | `publication`, `publication_credit` | A **third** source of papers → folds into **IPaper** |
-| `funding` | A national/European funding agency | `project`, `project_member` | A concept in **no** file source → new integrated class, joined to **Int_researchers** |
+| `registry` | A university CRIS (research information system) | `publication`, `publication_credit` | A third source of papers, folded into `IPaper` |
+| `funding` | A national/European funding agency | `project`, `project_member` | A concept in no file source: a new integrated class, joined to `Int_researchers` |
 
 ## Start it
 
@@ -34,7 +34,7 @@ docker exec aran-demo-sources psql -U demo -d demo_sources \
 ## Register in Aran
 
 Register two repositories: same server, different schema. In **Repositories →
-Register**, choose **Relational Database**, then:
+Register**, choose Relational Database, then:
 
 | Field | `registry` | `funding` |
 |---|---|---|
@@ -44,16 +44,16 @@ Register**, choose **Relational Database**, then:
 | Username | `aran_reader` | `aran_reader` |
 | Password | `aran_reader` | `aran_reader` |
 
-**Host and port depend on where Aran itself runs.** A wrong value here is the
+Host and port depend on where Aran itself runs. A wrong value here is the
 most common reason the demo stalls:
 
 | How you started Aran | Host | Port |
 |---|---|---|
-| `./gradlew :aran-application:bootRun` on your machine | `localhost` | `5434` |
+| On your machine (`make all`, or `./gradlew :aran-application:bootRun`) | `localhost` | `5434` |
 | `docker compose -f compose.standalone.yml up -d` (Aran in a container) | `demo-sources` | `5432` |
 
 In the second case Aran and Postgres share a compose network, so Aran reaches the
-container by service name on the *internal* port. Inside a container, `localhost`
+container by service name on the internal port. Inside a container, `localhost`
 is the container itself, not your machine.
 
 The host port is `5434` because the stack this demo runs beside already uses
@@ -82,23 +82,23 @@ on one side, full conference names on the other, as real sources often have.
 
 ## What the data supports
 
-- **A three-way union into `IPaper`.** Five `registry.publication` rows are the
-  *same works* as entries in `acm_papers.csv` and `semantic_papers.json`, under
+- A three-way union into `IPaper`. Five `registry.publication` rows are the
+  same works as entries in `acm_papers.csv` and `semantic_papers.json`, under
   this system's own identifiers, so the union has real duplicates to resolve.
   Seven rows are national-venue and teaching output that neither file source
   indexes, so the integrated class is a superset of all three.
-- **Two join keys of different quality.** `doi_link` is set only for the two
+- Two join keys of different quality. `doi_link` is set only for the two
   rows whose DOI appears in `semantic_papers.json` and is NULL elsewhere. Where
   it exists it is a precise key; elsewhere, title and year are the only
   fallback.
-- **A query no single source can answer.** `funding` shares no concept with any
-  file source; it links through `person_ref`. Answering *"which funded projects
-  produced open-access publications, and by whom"* needs the integrated model,
+- A query no single source can answer. `funding` shares no concept with any
+  file source; it links through `person_ref`. Answering "which funded projects
+  produced open-access publications, and by whom" needs the integrated model,
   with relational and file sources together.
 
 ## Regenerating or extending it
 
-`init.sql` runs only on an **empty** data volume, the standard behaviour of the
+`init.sql` runs only on an empty data volume, the standard behaviour of the
 Postgres image's `docker-entrypoint-initdb.d`. After editing it:
 
 ```bash
@@ -108,5 +108,10 @@ docker compose --profile demo up -d demo-sources
 ```
 
 If you add rows, keep `person_ref` values within `R001`–`R020`. Those are the
-`researcher_id`s in `researchers.json`, and the join to **Int_researchers**
+`researcher_id`s in `researchers.json`, and the join to `Int_researchers`
 depends on them.
+
+## More
+
+The [documentation site](https://dtak-upc.github.io/aran/) has the seminar walkthrough.
+[CONTRIBUTING.md](../../../CONTRIBUTING.md) explains how to build and test changes.

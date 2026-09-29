@@ -1,5 +1,9 @@
 # Contributing to Aran
 
+This file covers building Aran, the checks a pull request must pass and the rules
+the code base enforces. The [documentation site](https://dtak-upc.github.io/aran/)
+has the user guides and the contributor guide.
+
 ## Getting started
 
 ### Prerequisites
@@ -7,21 +11,44 @@
 | Tool | Version | Notes |
 |------|---------|-------|
 | JDK | 25 | IntelliJ can download it via Project Structure → SDK |
-| Docker | 24+ | For the runtime dependencies |
-| Node.js | 20+ | For the React frontend |
+| Docker | 24+ with Compose v2 | For the runtime dependencies and the Testcontainers suites |
+| Node.js | 20+ | For the React frontend and the documentation site |
+| Python | 3.12 | For `aran-lake`, freyja, the Python SDK and the MCP sidecar |
 
-### Run it in dev mode (fastest loop)
+Run `make bootstrap` once after cloning. It creates the Python virtual environments and
+`node_modules` that the stack and `./scripts/validate.sh` need, without starting anything.
+
+### Run the whole stack from source
 
 ```bash
-# 1. Start Postgres + Keycloak
+make all    # lake, freyja, Postgres, Keycloak, Fuseki, backend and Vite; opens http://localhost:5173
+make stop   # shut it all down
+```
+
+### Run the parts yourself (faster loop)
+
+Each long-running command below stays in the foreground, so give each its own terminal.
+
+```bash
+# 1. Postgres, Keycloak and Fuseki
 docker compose up -d
 
-# 2. Run the backend (Flyway applies migrations on startup)
-./gradlew :aran-application:bootRun
+# 2. The lake (its Garage and Postgres containers, migrations, then the service on :8085)
+make aran-lake
 
-# 3. Run the frontend (in another terminal)
+# 3. The freyja profiling sidecar on :8086
+make freyja-sidecar
+
+# 4. The backend on :8081. Flyway applies migrations on startup. The dev profile is
+#    required: without it the backend refuses to start on the published default secrets.
+SPRING_PROFILES_ACTIVE=dev ./gradlew :aran-application:bootRun
+
+# 5. The frontend
 cd aran-web && npm install && npm run dev   # http://localhost:5173
 ```
+
+`make dev` runs steps 1, 3 and 4 in one command, and starts freyja only if
+`aran-lake/.venv` exists.
 
 ### Run the full stack in Docker
 
@@ -29,14 +56,16 @@ cd aran-web && npm install && npm run dev   # http://localhost:5173
 docker compose -f compose.standalone.yml up -d   # http://localhost:8080
 ```
 
-`compose.standalone.yml` is the containerised topology: it builds the image
-itself and includes the lake, so the app can reach every service it needs.
-The root `docker-compose.yml` starts dependencies only.
+`compose.standalone.yml` is the containerised topology: it includes the lake, so the
+app can reach every service it needs. Without `--build` it pulls the Aran images and
+builds them from this checkout only when the pull fails. The root `docker-compose.yml`
+starts dependencies only.
 
 ### Demo data
 
-Flyway migrations, the demo organisation and alice's membership are provisioned on
-first startup. Sign in as `alice` / `aran`.
+With the dev profile, Flyway seeds a demo organisation and alice's membership on first
+startup. Sign in as `alice` / `aran`. These credentials are published in this repository
+and are for local development only.
 
 ---
 
@@ -72,16 +101,18 @@ of the project. You keep the copyright in what you write.
 ./scripts/validate.sh --offline  # the Docker-free subset
 ```
 
-`--offline` skips the Testcontainers integration tests in `aran-application`, the
-`aran-lake` suite, and the Playwright e2e run. If you have no Docker, run the
-offline subset and **say so in the PR**. Do not claim a green full gate you did
+`--offline` skips the Java tests tagged `docker` (the `aran-application` integration
+tests and a few Garage- and Postgres-backed operator tests), the `aran-lake` suite and
+freyja's Docker-marked tests. The Playwright e2e suite is never part of the default gate;
+`RUN_E2E=1` adds it to the full one. If you have no Docker, run the
+offline subset and say so in the pull request. Do not claim a green full gate you did
 not run.
 
 ### If you built something you could not verify
 
-Some work cannot be run where it was written. A JDBC client needs a desktop SQL
-tool; a browser suite needs images the sandbox cannot pull. That is fine if the
-pull request says so. State what you built, why you could not check it, how to
+Some work cannot be run where it was written: a JDBC client needs a desktop SQL
+tool, and a browser suite needs images a sandbox cannot pull. The pull request
+may include it if it says so. State what you built, why you could not check it, how to
 check it, and what is most likely to be wrong.
 
 ### Code of Conduct
@@ -98,8 +129,9 @@ aran/
 ├── aran-application/           Deployable Spring Boot app: HTTP, security, wire-up
 ├── aran-adapters/
 │   ├── aran-adapter-persistence/    JPA + Flyway + cloud license
+│   ├── aran-adapter-iceberg/        Iceberg REST catalog client
 │   └── aran-adapter-license-token/  Self-hosted signed-token license provider
-├── aran-operators/             Platform dynamic analytical capabilities
+├── aran-operators/             Analytical operators the platform loads dynamically
 │   ├── bootstrapping/          Source snapshot → RDF schema + wrappers
 │   ├── profiling/              Column profiling, via the freyja sidecar
 │   ├── join-discovery/         Join candidates, via the freyja sidecar
@@ -108,13 +140,16 @@ aran/
 │   └── query-engine/           OQL parser, Calcite planner, DuckDB executor
 ├── aran-lake/                  FastAPI lake service (Python, own venv + alembic)
 ├── freyja/                     Profiling + join-discovery sidecar (Python)
+├── aran-client/                Python SDK (versioned separately)
+├── aran-mcp/                   MCP sidecar for AI agents (Python)
 ├── aran-web/                   React 19 + Vite + TypeScript SPA
 ├── docs-site/                  Public documentation site (Docusaurus)
 ├── tests/sidecar_contract/     Security contract every Python sidecar must pass
 ├── docker/                     Observability stack config
 ├── .github/workflows/          CI/CD pipelines
 ├── Dockerfile                  Multi-stage backend image
-└── docker-compose.yml          Full-stack + observability profiles
+├── compose.standalone.yml      The whole product in one Compose file
+└── docker-compose.yml          Development dependencies, plus `demo` and `observability` profiles
 ```
 
 ---
@@ -125,20 +160,20 @@ Every pull request against `main` runs these jobs (see `.github/workflows/ci.yml
 
 | Job | What it runs |
 |---|---|
-| **Java** | `./scripts/validate.sh --java`: the Gradle build and every Java test, Testcontainers included |
-| **Web** | `./scripts/validate.sh --web`: `npm run build` (tsc + vite), `npm run lint`, `npm test` |
-| **Python** | `./scripts/validate.sh --python`: ruff, then aran-lake, freyja, aran-client, aran-mcp and the sidecar contract |
-| **Supply Chain** | gitleaks over history, picklescan over `freyja/models/model.pkl` |
-| **Images** | On merges to `main` only: builds and pushes `aran`, `aran-lake` and `aran-freyja` to GHCR |
+| Java | `./scripts/validate.sh --java`: the Gradle build and every Java test, Testcontainers included |
+| Web | `./scripts/validate.sh --web`: `npm run build` (tsc + vite), `npm run lint`, `npm test` |
+| Python | `./scripts/validate.sh --python`: ruff, then aran-lake, freyja, aran-client, aran-mcp and the sidecar contract |
+| Supply Chain | gitleaks over history, picklescan over `freyja/models/model.pkl` |
+| Images | On merges to `main` only: builds and pushes `aran`, `aran-lake` and `aran-freyja` to GHCR |
 
-Plus **dependency review** on PRs, which alerts on new high/critical CVEs and
-GPL-family licences.
+A dependency review also runs on pull requests. It fails on a new dependency with a
+vulnerability of high severity or above, or with a GPL-2.0, GPL-3.0 or AGPL-3.0 licence.
 
 The first three jobs are `./scripts/validate.sh`, one part each. Run the script
 before you push (run `make bootstrap` once first). Without a Docker daemon, use
 the offline subset described in "Before you open a pull request".
 
-**There is no OpenAPI generation step.** `aran-web/src/services/types.ts` is
+There is no OpenAPI generation step. `aran-web/src/services/types.ts` is
 hand-written and is the only source for wire shapes. `npm run generate:api` reads
 a live backend and is only a manual cross-check. Do not commit a generated
 `openapi.d.ts`: an earlier one went stale and contradicted the backend without
@@ -147,15 +182,14 @@ any check noticing.
 ### Writing tests
 
 - Unit tests go in `src/test/java` next to the code they test.
-- Integration tests that need a real Postgres should use **Testcontainers**
-  (dependency already wired in `aran-application`). CI provides a Docker daemon
-  and no database of its own.
+- Integration tests that need a real Postgres use Testcontainers (already a dependency of `aran-application`). CI provides a
+  Docker daemon and no database of its own.
 
 ---
 
 ## Architecture rules
 
-The hexagonal boundary is **enforced by a test**. `ArchitectureTest` in
+A test enforces the hexagonal boundary. `ArchitectureTest` in
 `aran-application` fails the build when the boundary is crossed. It also freezes
 the core's remaining Jena/JDBC/Calcite/HTTP dependencies, so they can only shrink.
 The frozen store does not update itself. Adding a violation, removing one, or
@@ -169,7 +203,7 @@ editing a frozen rule fails the test until you re-freeze with the command in
 
 ### Adding a new operator
 
-In short:
+Steps:
 
 1. Create a new module under `aran-operators/` with a `build.gradle` that depends on `aran-core`.
 2. Implement `Operator` from the `edu.upc.dtak.aran.core.operator` package and annotate with `@Component`.

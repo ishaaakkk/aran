@@ -53,19 +53,22 @@ public class ComponentHealthIndicators {
     HealthIndicator fusekiHealthIndicator(
             @Value("${aran.fuseki.base-url:http://localhost:3030}") String baseUrl) {
         // Fuseki's ping endpoint is unauthenticated by design and returns 200 with a timestamp.
-        return () -> probe("fuseki", baseUrl + "/$/ping", baseUrl);
+        return () -> probe("fuseki", baseUrl + "/$/ping", baseUrl, false);
     }
 
     @Bean
     HealthIndicator lakeHealthIndicator(
             @Value("${aran.lake.url:http://localhost:8085}") String baseUrl) {
-        return () -> probe("aran-lake", baseUrl + "/api/health", baseUrl);
+        return () -> probe("aran-lake", baseUrl + "/api/health", baseUrl, false);
     }
 
     @Bean
     HealthIndicator freyjaHealthIndicator(
             @Value("${aran.freyja.url:http://localhost:8086}") String baseUrl) {
-        return () -> probe("freyja", baseUrl + "/health", baseUrl);
+        // /healthz is FREYJA's only health route, and it answers 503 when the join-ranking model
+        // failed to load. Probing /health got a 404, which counted as UP, so a sidecar that
+        // could not rank a single join still looked healthy.
+        return () -> probe("freyja", baseUrl + "/healthz", baseUrl, true);
     }
 
     @Bean
@@ -76,7 +79,7 @@ public class ComponentHealthIndicators {
             // announcing the absence of something nobody asked for.
             return () -> Health.up().withDetail("configured", false).build();
         }
-        return () -> probe("keycloak", issuerUri + "/.well-known/openid-configuration", issuerUri);
+        return () -> probe("keycloak", issuerUri + "/.well-known/openid-configuration", issuerUri, false);
     }
 
     /**
@@ -86,15 +89,21 @@ public class ComponentHealthIndicators {
      * component is up, Aran simply asked it something it did not want to answer. Only a transport
      * failure or a timeout is DOWN, which is the distinction an operator needs: "restart this
      * container" versus "this is fine, look elsewhere".
+     *
+     * <p>{@code serverErrorIsDown} is for a route that is a real health endpoint: its 5xx is the
+     * component reporting itself unfit, not a question it declined.
      */
-    private Health probe(String component, String url, String reportedUrl) {
+    Health probe(String component, String url, String reportedUrl, boolean serverErrorIsDown) {
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                     .timeout(PROBE_TIMEOUT)
                     .GET()
                     .build();
             HttpResponse<Void> response = http.send(request, HttpResponse.BodyHandlers.discarding());
-            return Health.up()
+            Health.Builder health = serverErrorIsDown && response.statusCode() >= 500
+                    ? Health.down()
+                    : Health.up();
+            return health
                     .withDetail("component", component)
                     .withDetail("url", reportedUrl)
                     .withDetail("status", response.statusCode())

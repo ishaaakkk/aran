@@ -2,100 +2,74 @@
 title: 'Writing style'
 sidebar_label: 'Writing style'
 sidebar_position: 7
-description: 'The Simplified Technical English rules this site follows, and why.'
-# Diátaxis mode: explanation
+description: 'The rules the documentation follows: plain prose, one term per concept, concrete claims, and the patterns the docs gate rejects.'
+# Diátaxis mode: reference
 ---
 
-This site follows [ASD-STE100](https://www.asd-ste100.org/) — Simplified Technical
-English. ASD-STE100 was built for aircraft maintenance manuals: text that a
-non-native English reader must follow correctly, once, under time pressure. A
-reader setting up Aran for the first time is in the same position. The rules
-below are ASD-STE100's, adapted for software rather than aircraft.
+The reader is an engineer evaluating or operating Aran, often a non-native
+English speaker, usually with the page open next to a terminal. Write for that
+person: say what the software does, give the command, show the output.
 
-This is a rule for **prose**. It does not apply to [code
-comments](./comment-philosophy.md). Comments follow a different rule, for a
-different reason: a comment's audience already has the code open.
+This rule covers prose. [Code comments](./comment-philosophy.md) follow a
+different rule, because their reader already has the code open.
 
-## The rules
+## Rules
 
-**One sentence, one idea.** If a sentence has "and", "which", or a comma doing the
-work of a full stop, split it.
+**State the fact.** Prefer "Aran encrypts stored credentials" to "Aran takes
+security seriously". If a sentence would survive on any product's page, delete it
+or replace it with something specific: a number, a command, a file, a limit.
 
-> Before: The usual answer is an ETL pipeline: write transformation code per
-> source, land everything in a warehouse, and maintain that code forever.
->
-> After: The usual answer is an ETL pipeline. You write transformation code for
-> each source. You load everything into a warehouse. You maintain that code
-> forever.
+**Lead with what the reader needs.** Put the answer or the action first and the
+reason second. Start a how-to with the steps. Start a reference page with the table.
 
-**Twenty words a sentence, at most.** Most real sentences in aircraft manuals run
-6 to 12 words. Software explanation can run longer, but a sentence past twenty
-words is a sign it holds two ideas, not one.
+**Vary sentence length, and keep sentences clear.** There is no word limit. A
+sentence that holds two ideas is still better split, and a run of short
+sentences in the same shape reads as a template. Read the paragraph aloud.
 
-**Active voice. Name the actor.** "X does Y", not "Y is done by X" or "Y is
-done". A reader should never have to guess who is acting.
+**Active voice, named actor.** "The bootstrapping operator reads the snapshot",
+not "the snapshot is read".
 
-> Before: The schema is derived by inspecting the source.
->
-> After: The bootstrapping operator reads the source and derives a schema.
+**One term per concept.** Use **register** for adding a repository, **enrol** for
+adding a dataset to an integration model, and **promote** for making a draft
+schema active. Do not swap in a synonym for variety. Product names and technical
+terms stay exactly as the glossary spells them.
 
-**One word, one meaning.** Pick one verb per action and use it everywhere.
-This site uses **register** for adding a repository. It uses **enrol** for
-adding a dataset to an integration model. It uses **promote** for making a
-draft schema active. Never use a synonym for any of the three, even for
-variety.
+**Plain words.** "Use", not "utilise". "To", not "in order to". "About", not
+"approximately".
 
-**Simple words over long ones.** "Use", not "utilize". "Start", not
-"commence" or "initiate". "To", not "in order to". "About", not "approximately".
-If a shorter, plainer word means the same thing, use it.
+**Imperative for steps, present tense for behaviour.** "Run `make all`." "Aran
+derives a schema."
 
-**No noun stacks.** English lets you chain nouns as modifiers — "query
-optimiser cost estimate cache". ASD-STE100 forbids it past two. Rewrite with
-a preposition.
+**Say a limit once, where it matters.** Put what is tested and what is not on the
+[status page](../overview/status.md). On another page, add one sentence only where
+the limit changes what the reader does next, and link to the status page.
 
-> Before: the query optimiser's cost estimates
->
-> After: the cost estimates the query optimiser uses
+**British spelling** (organisation, optimiser, materialise). Code identifiers keep
+their own spelling, for example `materialize-oql`.
 
-**Present tense for how the system behaves.** Write "Aran derives a schema",
-not "Aran will derive a schema" or "Aran has derived a schema". Use another
-tense only when the tense itself is the point — a past event, a planned
-change.
+## Patterns the docs gate rejects
 
-**Imperative for instructions.** "Run `make all`", not "You should run `make
-all`" or "`make all` needs to be run".
+`npm run check-prose` fails the build on these:
 
-**Technical names stay exactly as they are.** ASD-STE100 exempts part names and
-system names from its vocabulary rules, because you cannot rename a bolt. This
-site's technical names are the product's own vocabulary: **Aran**, **OQL**,
-**FREYJA**, **DuckDB**, **Postgres**, **wrapper SQL**, **tenant**, **schema
-graph**, **integration model**, **join discovery**, **data repository**,
-**dataset**, **snapshot**, **operator**, **Calcite**, **Keycloak**, **API
-token**. Use them exactly as written elsewhere in this site. Do not invent a
-synonym for one. Do not simplify one into a vaguer general word.
+| Pattern | Why | Write instead |
+| --- | --- | --- |
+| More than eight em dashes on a page | An em dash stands in for the punctuation the sentence needs. | A full stop, a comma, a colon or brackets. |
+| "not just X, but Y", "not merely", "more than just" | A template for sounding emphatic. | State Y. |
+| "honest", "honestly", "candid" | A claim of honesty adds nothing and invites doubt. | State the limit plainly. |
+| "seamless", "robust", "powerful", "cutting-edge", "leverage", "delve", "crucial", "comprehensive", "game-changer" | Marketing vocabulary with no content. | Say what it does. |
+| "It's worth noting", "Importantly,", "Notably," | Filler before the point. | Make the point. |
+| A closing slogan of the form "X integrates A, and Aran integrates B" | Rhetoric in place of a claim. | End on the last fact. |
 
-**Short paragraphs, real lists.** A paragraph past four or five sentences is
-almost always a list that hasn't been formatted as one yet.
+The gate cannot catch every habit. In review, also look for bolded lead-ins on
+every bullet, headings that only announce ("Overview", "Summary"), triplets used for
+rhythm, and paragraphs that restate the previous one.
 
 ## What does not change
 
-This page does not change the [Diátaxis mode](./comment-philosophy.md) each
-page is written in, the front matter, code blocks, or links. Simplifying
-prose is a rewrite of sentences, not of structure or of technical content.
-A simplified page must still say everything the dense version said,
+Front matter, the Diátaxis mode comment, code blocks and links are unaffected. A
+rewrite changes sentences. It must still say everything the earlier text said,
 correctly.
-
-## In review
-
-A reviewer checking a page against this rule asks:
-
-1. Does any sentence pass twenty words?
-2. Does any sentence hold more than one idea?
-3. Is any verb passive where the actor is knowable?
-4. Does the same idea appear under two different words anywhere on the page?
-
-A "yes" to any of these means the sentence gets rewritten, not merely trimmed.
 
 ## Related
 
-- [Comment philosophy](./comment-philosophy.md) — the equivalent rule for code.
+- [Comment philosophy](./comment-philosophy.md): the equivalent rule for code.

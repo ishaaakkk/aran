@@ -51,7 +51,7 @@ FROM IPaper -[hasAuthor]-> IResearcher -[worksAt]-> IOrg -- multi-hop
 
 Rejected: `A -[p]-> A` (self-join), and any path visiting a class twice (cyclic).
 
-Every class used in `SELECT`, `WHERE`, or `GROUP BY` must be in the path.
+Every class used in `SELECT`, `WHERE`, `GROUP BY`, `HAVING` or `ORDER BY` must be in the path.
 
 ## WHERE
 
@@ -80,19 +80,19 @@ HAVING IResearcher.country = 'Spain'      -- on a group key
 HAVING COUNT(*) > 2 AND MIN(IPaper.year) < 2020
 ```
 
-`HAVING` takes `AND` only — no `OR`.
+`HAVING` takes `AND` only, not `OR`. An aggregate in `HAVING` must also be in `SELECT`, and a property in `HAVING` must be a `GROUP BY` key.
 
 ## ORDER BY / LIMIT
 
 ```
 ORDER BY IPaper.year DESC
-ORDER BY papers DESC             -- bare alias, for an aggregate's output
+ORDER BY papers DESC             -- bare alias: any SELECT output, including an aggregate
 ORDER BY IPaper.year, IPaper.title ASC
 LIMIT 100
 ```
 
-No `OFFSET`. Paging is the `offset` parameter on `run-oql`/`run`, page size
-1000.
+No `OFFSET`. Paging is the `offset` parameter on `run-oql`/`run`, at most
+1000 rows per page. An `ORDER BY` key must be a column of the result.
 
 ## Literals
 
@@ -107,7 +107,7 @@ year > -1                           -- negatives only right after an operator
 
 | | |
 | --- | --- |
-| Keywords | Case-insensitive, and keywords only where the grammar expects one — `Order.count` is a class and a property |
+| Keywords | Case-insensitive, and keywords only where the grammar expects one (`Order.count` is a class and a property) |
 | Identifiers | `[A-Za-z_][A-Za-z0-9_]*`, or double-quoted: `"first-name"`, `"price.usd"` (`""` escapes a quote) |
 | Semicolons | Ignored anywhere |
 | Whitespace | Insignificant, newlines included |
@@ -130,5 +130,5 @@ arithmetic or functions in a projection · parenthesised boolean logic · `OR` i
 | Class names | Come from the **alignment label**. Join-only classes are named `Int_<sourceClass>`. Read them from the workbench catalog. |
 | Row counts | A joined, unioned view has one row per pair — `COUNT(*)` counts pairs, not entities |
 | Null columns | Normal in a union: a column only one source has is null for the others |
-| Result cap | 1000 rows. Use `materialize-oql` for the full result |
+| Result cap | 1000 rows per page. `POST /api/query/export` returns the full result (it runs `materialize-oql`) |
 | SQL columns | In raw SQL, `int_` columns are **full property IRIs** and need double quotes |

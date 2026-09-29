@@ -44,7 +44,7 @@ const redocPreset: PresetConfig[] = hasOpenApiSnapshot
 
 const config: Config = {
   title: 'Aran',
-  tagline: 'Your data sources were never designed to fit together. Aran integrates them anyway.',
+  tagline: 'Query data sources that were never designed to fit together.',
   favicon: 'img/favicon.svg',
 
   future: {
@@ -157,7 +157,8 @@ const config: Config = {
           items: [
             {label: 'What is Aran', to: '/docs/overview/what-is-aran'},
             {label: 'Quickstart', to: '/docs/getting-started/quickstart'},
-            {label: 'Core concepts', to: '/docs/overview/core-concepts'},
+            {label: 'Capabilities', to: '/docs/capabilities/'},
+            {label: 'Status and limitations', to: '/docs/overview/status'},
           ],
         },
         {
@@ -172,7 +173,7 @@ const config: Config = {
           title: 'Project',
           items: [
             {label: 'Contributor guide', to: '/docs/contributing/'},
-            {label: 'Release notes', to: '/docs/release-notes'},
+            {label: 'Changelog', href: `${githubRepo}/blob/main/CHANGELOG.md`},
             {label: 'GitHub', href: githubRepo},
           ],
         },

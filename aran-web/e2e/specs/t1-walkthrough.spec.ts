@@ -40,23 +40,23 @@ test.describe.configure({ timeout: 15 * 60 * 1000 });
  */
 
 const STEPS = [
-  'Step 1 — Create a project',
-  'Step 2 — Register a repository',
-  'Step 3 — Upload the three datasets',
-  'Step 4 — Enroll the datasets and check their wrappers',
-  'Step 5 — Align the schemas',
-  'Step 6 — Let Aran find the join for you',
-  'Step 7 — Integrate and promote',
-  'Step 8 — Add denial constraints',
-  'Step 9 — Query across both databases',
-  'Step 10 — Publish and connect',
+  'Step 1: Create a project',
+  'Step 2: Register a repository',
+  'Step 3: Upload the three datasets',
+  'Step 4: Enroll the datasets and check their wrappers',
+  'Step 5: Align the schemas',
+  'Step 6: Let Aran find the join for you',
+  'Step 7: Integrate and promote',
+  'Step 8: Add denial constraints',
+  'Step 9: Query across both databases',
+  'Step 10: Publish and connect',
 ] as const;
 
 /** Step 10's product, as the page names it. */
 const PRODUCT = 'papers_by_institution';
 
-const ALIGN_5A = '5a — Union the two paper sources into IPaper';
-const ALIGN_5B = '5b — Join the papers to their researchers';
+const ALIGN_5A = '5a: Union the two paper sources into IPaper';
+const ALIGN_5B = '5b: Join the papers to their researchers';
 
 /** The page's literals for Steps 1–3; each is asserted to be on the page before it is used. */
 const PROJECT = 'papers';
@@ -83,20 +83,20 @@ interface QueryCase {
 }
 
 const QUERIES: Record<string, QueryCase> = {
-  'Q1 — The union, visible': {
+  'Q1: The union': {
     oql: 'SELECT IPaper.*',
     columns: ['pid', 'authorId', 'title', 'year', 'venue', 'citation_count'],
     expected: (rows) => rows.map((r) => [
       r.pid, r.authorId, r.title, r.year, r.venue ?? NULL_CELL, r.citationCount ?? NULL_CELL,
     ]),
   },
-  'Q2 — Traverse the join': {
+  'Q2: Traverse the join': {
     oql: 'SELECT IPaper.title, Int_researchers.full_name, Int_researchers.affiliation '
       + 'FROM IPaper -[hasAuthor]-> Int_researchers',
     columns: ['title', 'full_name', 'affiliation'],
     expected: (rows, of) => rows.map((r) => [r.title, of(r).fullName, of(r).affiliation]),
   },
-  'Q3 — Filter on the right-hand class': {
+  'Q3: Filter on the right-hand class': {
     oql: 'SELECT IPaper.title, IPaper.year, Int_researchers.full_name '
       + 'FROM IPaper -[hasAuthor]-> Int_researchers '
       + "WHERE Int_researchers.affiliation = 'UPC'",
@@ -105,7 +105,7 @@ const QUERIES: Record<string, QueryCase> = {
       .filter((r) => of(r).affiliation === 'UPC')
       .map((r) => [r.title, r.year, of(r).fullName]),
   },
-  'Q4 — Filter on the left-hand class': {
+  'Q4: Filter on the left-hand class': {
     oql: 'SELECT IPaper.title, Int_researchers.full_name, Int_researchers.affiliation '
       + 'FROM IPaper -[hasAuthor]-> Int_researchers '
       + 'WHERE IPaper.year > 2023',
@@ -114,7 +114,7 @@ const QUERIES: Record<string, QueryCase> = {
       .filter((r) => r.year > 2023)
       .map((r) => [r.title, of(r).fullName, of(r).affiliation]),
   },
-  'Q5 — An aggregate': {
+  'Q5: An aggregate': {
     oql: 'SELECT Int_researchers.affiliation, COUNT(*) AS paper_count '
       + 'FROM IPaper -[hasAuthor]-> Int_researchers '
       + 'GROUP BY Int_researchers.affiliation '
@@ -184,24 +184,24 @@ test('the walkthrough page states what its fixtures produce', () => {
 
   // Step 9: row counts, and every paper id the page names — Semantic Scholar's pid is the full
   // DOI, the claim an earlier version of the page got wrong ("SS002").
-  const q1 = prose(section('Q1 — The union, visible').body);
+  const q1 = prose(section('Q1: The union').body);
   expect(q1).toContain(`${rows.length} rows: ACM's ${acm.length}`);
   expect(q1).toContain(`Semantic Scholar's ${semantic.length}`);
-  for (const heading of ['Q2 — Traverse the join', 'Q3 — Filter on the right-hand class',
-    'Q4 — Filter on the left-hand class']) {
+  for (const heading of ['Q2: Traverse the join', 'Q3: Filter on the right-hand class',
+    'Q4: Filter on the left-hand class']) {
     const expected = QUERIES[heading].expected(rows, researcherOf);
     expect(prose(section(heading).body), heading).toContain(`${expected.length} rows`);
   }
   const idsNamed = (heading: string) =>
     new Set([...prose(section(heading).body).matchAll(/\b(ACM\d{3}|10\.1145\/SS\d{3})\b/g)].map((m) => m[1]));
-  expect(idsNamed('Q3 — Filter on the right-hand class'))
+  expect(idsNamed('Q3: Filter on the right-hand class'))
     .toEqual(new Set(rows.filter((r) => researcherOf(r).affiliation === 'UPC').map((r) => r.pid)));
-  expect(idsNamed('Q4 — Filter on the left-hand class'))
+  expect(idsNamed('Q4: Filter on the left-hand class'))
     .toEqual(new Set(rows.filter((r) => r.year > 2023).map((r) => r.pid)));
 
   // Q5: the institutions named are exactly the ones above the HAVING bar.
-  const q5 = prose(section('Q5 — An aggregate').body);
-  const above = new Set(QUERIES['Q5 — An aggregate'].expected(rows, researcherOf).map(([a]) => String(a)));
+  const q5 = prose(section('Q5: An aggregate').body);
+  const above = new Set(QUERIES['Q5: An aggregate'].expected(rows, researcherOf).map(([a]) => String(a)));
   for (const affiliation of new Set([...researchers.values()].map((r) => r.affiliation))) {
     expect(q5.includes(affiliation), `Q5's prose and ${affiliation}`).toBe(above.has(affiliation));
   }
@@ -228,7 +228,7 @@ test('a reader following the walkthrough gets the rows it promises', async ({
   });
 
   await test.step(STEPS[2], async () => {
-    expect(prose(section(STEPS[2]).body)).toContain('use `acm`, `semantic`, and `researchers`');
+    expect(prose(section(STEPS[2]).body)).toContain('use `acm`, `semantic` and `researchers`');
     for (const { name, file } of DATASETS) {
       await datasets.goto();
       await datasets.registerFile(PROJECT, REPO, name, seminarPath(file));

@@ -6,9 +6,11 @@ description: 'Why this repository comments the way it does, and the rule a revie
 # Diátaxis mode: explanation
 ---
 
-Comment density in this repository ranges from about 5% in `Dataset.java` to
-about 52% in `AranRules.java`. That spread is not inconsistency to fix. It is
-what happens when the rule is about *content*, not *quantity*.
+This page is the rule a reviewer applies to a comment in this repository's
+code. Comment density varies widely from file to file: a domain record such
+as `Dataset.java` carries a few comments, while `AranRules.java`, the query
+planner's rule set, is more comment than code. That spread is not
+inconsistency to fix. It follows from a rule about content, not quantity.
 
 ## Explain why, never what
 
@@ -29,8 +31,9 @@ st.execute("SET TimeZone='UTC'");
 
 ## Comment the non-obvious decision, and say what breaks without it
 
-`AranRules` is 52% comment because a debugging cycle found the reason behind
-nearly every rule it adds or excludes. That reason is worth its length.
+`AranRules` is mostly comment because a debugging cycle found the reason
+behind nearly every rule it adds or excludes. That reason is worth its
+length.
 
 The test of a good comment here: would removing the code it guards produce a
 mystery? Two examples from the codebase:
@@ -41,34 +44,34 @@ mystery? Two examples from the codebase:
 > queries go — and then reports no drift, forever.
 
 > The enforced constraints are applied HERE, per member, rather than once above
-> the union. Selection distributes over union — σ(A ∪ B) = σ(A) ∪ σ(B) — so a
-> union of filtered members is exactly `int_`. Without this, a planner that unions
+> the union. Selection distributes over union — σ(A ∪ B) = σ(A) ∪ σ(B), and that
+> holds for bag semantics too — so a union of filtered members is exactly `int_`. Without this, a planner that unions
 > the members directly would silently stop enforcing denial constraints and
 > surface quarantined rows.
 
-Both name a specific failure the reader would otherwise have to rediscover.
-Neither describes what the code does.
+Both name a specific failure the reader would otherwise have to rediscover,
+and neither describes what the code does.
 
-**Density is an outcome, not a target.** Do not pad a file toward 52%, and
-do not strip a file down toward 5%.
+Density is an outcome, not a target. Do not pad a file with comments to
+match `AranRules`, and do not strip a file's comments to match `Dataset`.
 
 ## Prefer a test to a paragraph
 
 A claim that can be asserted should be a test with a `@DisplayName`, not a
-comment. Comments do not fail when they go stale. Tests do.
+comment. Comments do not fail when they go stale, and tests do.
 
 If you find yourself writing "this must always hold because…", stop. Write
 the assertion instead.
 
 How this repository scopes security-relevant code follows the same logic.
 The query engine's read-only SQL guard is package-private rather than
-private, with a comment saying why: *"this is a security boundary and its
+private, with a comment that says why: *"this is a security boundary and its
 attack strings must be exercisable without a live catalog."* A boundary
 reachable only through a full invocation is a boundary nobody tests.
 
 ## Name the artefact, not the anecdote
 
-"F14 — the hint must be the uploaded filename" is useful. "changed this
+"F14: the hint must be the uploaded filename" is useful. "changed this
 because it broke" is not. Reference the finding, the ticket, the paper
 section, the rule name — something a reader can look up.
 
@@ -85,5 +88,5 @@ A "no" to the first, or a "yes" to the third, means it should not be there.
 
 ## Related
 
-- [Module layout](./module-layout.md) — the invariants most worth commenting.
-- [Build and test](./build-and-test.md) — where the test that replaces a paragraph goes.
+- [Module layout](./module-layout.md): the invariants most worth commenting.
+- [Build and test](./build-and-test.md): where the test that replaces a paragraph goes.

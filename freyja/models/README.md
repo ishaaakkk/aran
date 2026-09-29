@@ -1,11 +1,11 @@
 # `model.pkl`: the join-discovery ranking model
 
 `profile_api.py` loads this file with `joblib.load` at import time and uses it to rank
-join candidates. It is a **committed binary blob**, and loading a pickle runs it: a
+join candidates. It is a committed binary blob, and loading a pickle runs it: a
 pickle is a small program. So the file is only as safe as its provenance, which this
 note records.
 
-## What is actually in it
+## Contents
 
 Read without executing it, via `pickletools.genops`. The opcodes name every class and
 callable the pickle reconstructs, and this is the complete list for this file:
@@ -18,7 +18,7 @@ numpy._core.multiarray._reconstruct
 numpy.dtype
 ```
 
-Protocol 4, 144,345 bytes, 7 `STACK_GLOBAL` / 3 `REDUCE` / 2 `NEWOBJ` / 4 `BUILD` and
+Protocol 4, 144,473 bytes, 7 `STACK_GLOBAL` / 3 `REDUCE` / 2 `NEWOBJ` / 4 `BUILD` and
 nothing else. There is no `os`, `subprocess`, `builtins.eval` or `posix.system`: the
 opcodes an attacker would need are absent. CI repeats this check on every run (the
 `supply-chain` job in `.github/workflows/ci.yml`).
@@ -37,18 +37,26 @@ with the sidecar. **The training script was not preserved**, and nothing in this
 repository can regenerate the model. That is a reproducibility problem, not a security
 one, and it is tracked as an open item.
 
-The practical consequence: the model cannot be retrained, audited against its training
+In practice the model cannot be retrained, audited against its training
 data, or reproduced from source. If join-discovery quality ever needs to change, that
 work starts with rebuilding the training pipeline, not with tuning this file.
 
-## Why it is still a pickle
+## Why it stays a pickle
 
 Migrating to ONNX or SafeTensors was considered and rejected. Both prevent an artefact
 from executing code on load, and the opcode scan above already shows that this one does
-not. Neither fixes the real problem, that nobody can regenerate the model. A migration
+not. Neither fixes the underlying problem: nobody can regenerate the model. A migration
 would need the model loaded, converted and revalidated against a training set that does
 not exist.
 
-The `scikit-learn` upper bound in `freyja/requirements.txt` is the constraint that keeps
-this file loadable; sklearn does not guarantee pickle compatibility across minor
-versions, and there is no way to re-emit this one.
+The exact `scikit-learn==1.9.0` pin in `freyja/requirements.txt` is what keeps this file
+loading cleanly. scikit-learn does not guarantee pickle compatibility across versions, and
+it warns on any difference, patch releases included. The model can be re-pickled under a
+newer scikit-learn, but not retrained: bump the pin and re-pickle the file in the same
+commit, never one without the other. `freyja/tests/test_model.py` fails when the two drift
+apart.
+
+## More
+
+The [documentation site](https://dtak-upc.github.io/aran/) describes the freyja sidecar.
+[CONTRIBUTING.md](../../CONTRIBUTING.md) explains the CI supply-chain job.

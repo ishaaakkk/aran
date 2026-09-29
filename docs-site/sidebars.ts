@@ -22,128 +22,172 @@ const apiSection = hasOpenApiSnapshot
   : {type: 'doc' as const, id: 'api/index', label: 'API Reference'};
 
 /**
- * The information architecture is Diátaxis-shaped: every page belongs to exactly
- * one of tutorial / how-to / reference / explanation, and each page declares its
- * mode in a front-matter comment. Categories below group by *audience task*, not
- * by mode, because readers arrive with a job to do rather than a genre in mind.
+ * The sidebar follows the product: introduction, getting started, then one
+ * section per capability in the order data moves through Aran (connect, derive
+ * and profile, align and version, query, serve), then reference, operations,
+ * internals and contributing. Every page still belongs to one Diátaxis mode,
+ * declared in a front-matter comment; the modes are the inside of each section,
+ * not the top level, because readers arrive with a job rather than a genre.
  */
 const sidebars: SidebarsConfig = {
   docsSidebar: [
     'index',
     {
       type: 'category',
-      label: 'Overview',
+      label: 'Introduction',
       collapsed: false,
       items: [
         'overview/what-is-aran',
         'overview/why-aran',
         'overview/core-concepts',
-        'overview/architecture',
-        'overview/glossary',
+        'overview/status',
       ],
     },
     {
       type: 'category',
-      label: 'Getting Started',
+      label: 'Get Started',
       collapsed: false,
       items: ['getting-started/quickstart', 'getting-started/walkthrough'],
     },
     {
       type: 'category',
-      label: 'How-to Guides',
+      label: 'Capabilities',
+      collapsed: false,
+      link: {type: 'doc', id: 'capabilities/index'},
       items: [
-        'how-to/register-a-data-repository',
-        'how-to/bootstrap-and-profile-a-dataset',
-        'how-to/align-and-integrate-schemas',
-        'how-to/write-wrapper-sql',
-        'how-to/run-join-discovery',
-        'how-to/configure-denial-constraints',
-        'how-to/invoke-a-capability-operator',
-        'how-to/export-query-results',
-        'how-to/create-a-data-product',
-        'how-to/query-a-database-live',
-        'how-to/write-a-new-operator',
+        {
+          type: 'category',
+          label: '1. Connect',
+          link: {type: 'doc', id: 'capabilities/connect'},
+          items: [
+            'how-to/register-a-data-repository',
+            {
+              type: 'category',
+              label: 'Federated access',
+              link: {type: 'doc', id: 'capabilities/federated-access'},
+              items: [
+                'how-to/query-a-database-live',
+                'query-engine/federated-execution-and-placement',
+              ],
+            },
+            'repositories/index',
+            'repositories/file-uploads',
+            'repositories/relational-databases',
+            'repositories/object-storage',
+            'repositories/iceberg-rest-catalogs',
+            'repositories/singer-taps',
+          ],
+        },
+        {
+          type: 'category',
+          label: '2. Derive and profile',
+          link: {type: 'doc', id: 'capabilities/derive-and-profile'},
+          items: [
+            'deep-dives/bootstrapping-methods',
+            'how-to/bootstrap-and-profile-a-dataset',
+            'how-to/write-wrapper-sql',
+            'deep-dives/bootstrapping-and-the-schema-graph',
+            'deep-dives/wrapper-fields',
+          ],
+        },
+        {
+          type: 'category',
+          label: '3. Align and version',
+          link: {type: 'doc', id: 'capabilities/align-and-version'},
+          items: [
+            'how-to/run-join-discovery',
+            'how-to/align-and-integrate-schemas',
+            'how-to/integrate-incrementally',
+            'how-to/configure-denial-constraints',
+          ],
+        },
+        {
+          type: 'category',
+          label: '4. Query',
+          link: {type: 'doc', id: 'capabilities/query'},
+          items: [
+            {
+              type: 'category',
+              label: 'OQL',
+              link: {type: 'doc', id: 'oql/index'},
+              items: [
+                'oql/tutorial',
+                'oql/syntax-reference',
+                'oql/sql-fallback',
+                'oql/cookbook',
+                'oql/cheat-sheet',
+              ],
+            },
+            'how-to/export-query-results',
+            {
+              type: 'category',
+              label: 'Query optimisation',
+              link: {type: 'doc', id: 'query-engine/index'},
+              items: [
+                'query-engine/typed-columns-and-costing',
+                'query-engine/wrapper-optimisation',
+                'query-engine/referential-evidence',
+                'query-engine/denial-constraints',
+                'deep-dives/query-pipeline',
+              ],
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: '5. Serve',
+          link: {type: 'doc', id: 'capabilities/serve'},
+          items: [
+            'how-to/create-a-data-product',
+            'deep-dives/virtual-data-products',
+          ],
+        },
       ],
     },
     {
       type: 'category',
-      label: 'Data Repositories',
-      link: {type: 'doc', id: 'repositories/index'},
-      items: [
-        'repositories/relational-databases',
-        'repositories/object-storage',
-        'repositories/file-uploads',
-        'repositories/singer-taps',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'OQL',
-      link: {type: 'doc', id: 'oql/index'},
-      items: [
-        'oql/tutorial',
-        'oql/syntax-reference',
-        'oql/sql-fallback',
-        'oql/cookbook',
-        'oql/cheat-sheet',
-      ],
-    },
-    {
-      // Behaviour a user can observe in a plan or a badge, rather than the
-      // engine's internals — those stay in Architecture Deep Dives.
-      type: 'category',
-      label: 'Query Engine',
-      items: [
-        'query-engine/typed-columns-and-costing',
-        'query-engine/wrapper-optimisation',
-        'query-engine/referential-evidence',
-        'query-engine/denial-constraints',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Programmatic Access',
+      label: 'Connect Your Tools',
       link: {type: 'doc', id: 'programmatic-access/index'},
       items: [
         'programmatic-access/jdbc',
-        'programmatic-access/mcp',
         'programmatic-access/python-sdk',
+        'programmatic-access/mcp',
+        'programmatic-access/iceberg',
         'programmatic-access/temporal-types',
+        'how-to/invoke-a-capability-operator',
       ],
     },
     {
       type: 'category',
-      label: 'Architecture Deep Dives',
-      items: [
-        'deep-dives/query-pipeline',
-        'deep-dives/bootstrapping-and-the-schema-graph',
-        'deep-dives/virtual-data-products',
-        'deep-dives/wrapper-fields',
-        'deep-dives/multi-tenancy',
-        'deep-dives/driver-resolution',
-        'deep-dives/licensing-modes',
-      ],
+      label: 'Reference',
+      items: ['overview/glossary', 'administration/configuration-reference', apiSection],
     },
     {
       type: 'category',
-      label: 'Administration & Deployment',
+      label: 'Operate',
       items: [
         'administration/standalone',
         'administration/production-build',
         'administration/docker-compose',
-        'administration/configuration-reference',
         'administration/license-configuration',
+        'deep-dives/multi-tenancy',
+        'deep-dives/licensing-modes',
         'administration/troubleshooting',
       ],
     },
-    apiSection,
     {
       type: 'category',
-      label: 'Contributor Guide',
+      label: 'Internals',
+      items: ['overview/architecture', 'deep-dives/driver-resolution'],
+    },
+    {
+      type: 'category',
+      label: 'Contribute',
       link: {type: 'doc', id: 'contributing/index'},
       items: [
         'contributing/module-layout',
         'contributing/build-and-test',
+        'how-to/write-a-new-operator',
         'contributing/comment-philosophy',
         'contributing/branching-and-merge-gate',
         'contributing/e2e-suite',
@@ -151,7 +195,6 @@ const sidebars: SidebarsConfig = {
         'contributing/writing-style',
       ],
     },
-    'release-notes',
   ],
 };
 

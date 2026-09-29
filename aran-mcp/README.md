@@ -1,16 +1,16 @@
 # aran-mcp
 
-An [MCP](https://modelcontextprotocol.io) server that exposes Aran **data products** to an
+An [MCP](https://modelcontextprotocol.io) server that exposes Aran data products to an
 agent you already run: Claude Desktop, Claude Code, Cursor, or anything else that speaks
 the protocol.
 
-**Aran ships no model and runs no inference.** This is a protocol adapter: your client's
+Aran ships no model and runs no inference. This is a protocol adapter: your client's
 model does the language part, and Aran answers with data. It holds no API key for any model
-provider and never contacts one. Every row it returns does enter your agent's context, and
+provider and never contacts one. Every row it returns enters your agent's context, and
 a client that uses a hosted model sends that context to its provider. The `READ` token it
-runs under can read everything its owner can, not only the products it lists.
+runs under can read everything its owner can, including products it does not list.
 
-It is also **read-only**. Every call it makes to Aran is a `GET`, so a `READ`-scoped token
+The server is read-only. Every call it makes to Aran is a `GET`, so a `READ`-scoped token
 is enough and it cannot change anything you have built. A test enforces this:
 `tests/test_server.py::TestReadOnly`.
 
@@ -61,18 +61,17 @@ Prefer `env` over `--token`: command-line arguments show up in process listings.
 
 | Setting | Env | Flag | Notes |
 |---|---|---|---|
-| Aran base URL | `ARAN_URL` | `--url` | `http://localhost:8081` for a local stack |
+| Aran base URL | `ARAN_URL` | `--url` | `http://localhost:8081` for a development stack, `http://localhost:8080` for the standalone one |
 | API token | `ARAN_TOKEN` | `--token` | `READ` scope is sufficient |
 | Project filter | `ARAN_PROJECT` | `--project` | Optional; id or name |
 | Allow plain HTTP to a remote host | (none) | `--allow-insecure` | Only when the wire is already encrypted (SSH tunnel, service mesh). `localhost` never needs it |
 
-### Why stdio, and not a URL
+### Why stdio and not a URL
 
-Because Aran usually runs on your machine. Claude Desktop's remote connectors route
+Aran usually runs on your machine. Claude Desktop's remote connectors route
 through Anthropic's cloud and need the server reachable from Anthropic's public IP ranges,
-which `localhost:8081` is not. A stdio subprocess works for every local client and opens no
-network port. An in-process HTTP endpoint becomes the right answer when there is a hosted
-multi-user Aran.
+which a `localhost` address is not. A stdio subprocess works for every local client and opens no
+network port. A hosted, multi-user Aran would need an HTTP endpoint instead.
 
 ## What it exposes
 
@@ -85,21 +84,21 @@ multi-user Aran.
 
 **Resource**
 
-`aran://product/{name-or-id}`: a product's *contract*, meaning the OQL defining it, the
-schema version it was defined against, its status and its freshness. Not its rows.
+`aran://product/{name-or-id}`: a product's contract, meaning the OQL defining it, the
+schema version it was defined against, its status and its freshness. It does not return rows.
 
 ### What it does not expose
 
-- **No write tool.** Materializing is a `POST` needing `FULL` scope, and an agent
-  re-materializing a product is a write nobody asked for.
-- **No arbitrary OQL.** Serving *products* keeps an agent to named, reviewed queries whose
+- No write tool. Materializing is a `POST` that needs `FULL` scope, and an agent
+  re-materializing a product would be a write nobody asked for.
+- No arbitrary OQL. Serving products keeps an agent to named, reviewed queries whose
   definition it cannot change. An OQL tool would remove that limit. (A product's schema
   version is provenance, not a pin: a refresh re-runs its OQL under the schema active at
   that time, so its rows can change between refreshes.)
-- **No `DRAFT` or `MATERIALIZING` products.** They have no snapshot to read.
+- No `DRAFT` or `MATERIALIZING` products. They have no snapshot to read.
 
-`STALE` products *are* served, flagged, with their `materializedAt`, so an agent reading a
-month-old snapshot knows it.
+The server does serve `STALE` products, flagged, with their `materializedAt`, so an
+agent reading a month-old snapshot knows it.
 
 ## Which products are visible?
 
@@ -107,8 +106,8 @@ Every product the token can already read. There is no per-product "publish" swit
 because this sidecar runs on your machine under your own token: anything it can see, you
 can already open in the Aran UI.
 
-That changes when the MCP server is hosted and shared with other people. Then "which
-products may agents see" becomes a separate question from "which products exist". Until
+This changes if the MCP server is hosted and shared with other people: "which products
+may agents see" then becomes a separate question from "which products exist". Until
 then, the tenant boundary and the token's scope decide what is visible, and Aran enforces
 both.
 
@@ -126,10 +125,15 @@ No network, no Docker, no subprocess. The MCP side runs the real protocol in mem
 reason given in `aran-client/tests/conftest.py`: mocking httpx would test the mock, and the
 seams that matter are the ones a mock hides.
 
-## Status
+## Live check
 
 The unit suite covers the protocol and the wire shapes against a loopback stub of Aran.
-The browser end-to-end suite (`aran-web/e2e/specs/p1-mcp-live-client.spec.ts`) closes the
-gap a stub cannot: it spawns `python -m aran_mcp` as a real subprocess, drives it with the
+The browser end-to-end suite (`aran-web/e2e/specs/p1-mcp-live-client.spec.ts`) covers what a stub
+cannot: it spawns `python -m aran_mcp` as a real subprocess, drives it with the
 official MCP SDK client over stdio, and reads a materialized data product from a running
 Aran over HTTP with a READ-scoped token (`aran-mcp/tests/test_live_client.py`).
+
+## More
+
+The [documentation site](https://dtak-upc.github.io/aran/) has the user guides.
+[CONTRIBUTING.md](../CONTRIBUTING.md) explains how to build and test changes.

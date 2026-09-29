@@ -10,14 +10,10 @@ import styles from './index.module.css';
 /**
  * The project's front page.
  *
- * Kept deliberately short. Every claim on it is one the documentation backs up and
- * links to: there is no capability named here that the repository does not
- * implement, which is the same rule the docs themselves follow. In particular it
- * does not claim a licence, because the repository does not carry one.
- *
- * The hero leads with automated schema integration at scale, not with querying:
- * a query is one of several things the resulting graph makes possible (alongside
- * applications and agents), not the reason Aran exists.
+ * Kept short. Every claim on it is one the documentation backs up and links to,
+ * and the five capability cards mirror the site's Capabilities section, in the
+ * order data moves through Aran. The source table and the status page carry the
+ * limits, so the page does not have to hedge in the hero.
  */
 
 type CapabilityLevel = 'full' | 'none';
@@ -94,6 +90,28 @@ function IconQuery({size = 24}: {size?: number}): ReactNode {
   );
 }
 
+function IconProfile({size = 24}: {size?: number}): ReactNode {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="5" y1="20" x2="5" y2="12" />
+      <line x1="10" y1="20" x2="10" y2="6" />
+      <line x1="15" y1="20" x2="15" y2="10" />
+      <line x1="20" y1="20" x2="20" y2="4" />
+    </svg>
+  );
+}
+
+function IconServe({size = 24}: {size?: number}): ReactNode {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="6" rx="1.5" />
+      <rect x="3" y="14" width="18" height="6" rx="1.5" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
+      <line x1="7" y1="17" x2="7.01" y2="17" />
+    </svg>
+  );
+}
+
 const mutedIconStyle: React.CSSProperties = {flexShrink: 0, color: 'var(--aran-muted-foreground)'};
 
 function IconFile(): ReactNode {
@@ -156,28 +174,35 @@ function Dot({level}: {level: CapabilityLevel}): ReactNode {
 
 const CAPABILITIES = [
   {
-    title: 'Sources stay where they are',
-    body: 'Register a database, a bucket, a file, an endpoint. Aran derives a schema for each one by reading it, rather than asking you to describe it up front.',
+    title: 'Connect',
+    body: 'Files, PostgreSQL, MySQL, MariaDB, S3-compatible storage, Iceberg REST catalogs and Singer taps. Copy a table or stream into the lake, or read databases and Iceberg tables live.',
+    to: '/docs/capabilities/connect',
     icon: <IconDatabase />,
   },
   {
-    title: 'Integration is data, not code',
-    body: 'How sources relate is declared as an RDF graph you can query, diff and version, instead of being buried in transformation code that nothing can inspect.',
+    title: 'Derive and profile',
+    body: 'Aran reads each source and generates a schema, an editable SQL wrapper and column statistics. Nobody writes a schema by hand.',
+    to: '/docs/capabilities/derive-and-profile',
+    icon: <IconProfile />,
+  },
+  {
+    title: 'Align and version',
+    body: 'Join proposals come with evidence. You map sources onto one vocabulary stored as a graph, then diff, promote and roll back versions.',
+    to: '/docs/capabilities/align-and-version',
     icon: <IconGraphNodes />,
   },
   {
-    title: 'One query, many sources',
-    body: 'Ask a question against the shared vocabulary. The engine unfolds it into the sources behind it and answers from all of them at once.',
+    title: 'Query',
+    body: 'Write OQL against the integrated vocabulary. Calcite plans it with cost estimates from the profiles, and DuckDB runs it.',
+    to: '/docs/capabilities/query',
     icon: <IconQuery />,
   },
-];
-
-const PIPELINE = [
-  {title: 'Register', body: 'Connect a repository and bring a dataset in.'},
-  {title: 'Bootstrap', body: 'A schema is derived from the data, with the SQL needed to read it back.'},
-  {title: 'Profile', body: 'Column statistics feed both join discovery and the query optimiser.'},
-  {title: 'Integrate', body: 'Map source properties onto a shared vocabulary; two sources can become one class.'},
-  {title: 'Query', body: 'Write OQL against that vocabulary and get rows from every source.'},
+  {
+    title: 'Serve',
+    body: 'Save a query as a data product, stored as a snapshot or recomputed on every read. SQL clients read it over JDBC, Iceberg engines through a read-only catalog and AI agents over MCP. Scripts and notebooks run OQL over REST or the Python SDK.',
+    to: '/docs/capabilities/serve',
+    icon: <IconServe />,
+  },
 ];
 
 const REPOSITORIES: RepoRow[] = [
@@ -188,8 +213,27 @@ const REPOSITORIES: RepoRow[] = [
     connectNote: 'JDBC connect',
     browse: 'full',
     browseNote: 'table list',
-    importNote: 'PostgreSQL only',
+    importNote: 'Per table',
     federatedNote: 'PostgreSQL, MySQL, MariaDB',
+  },
+  {
+    type: 'Iceberg REST catalogs',
+    href: '/docs/repositories/iceberg-rest-catalogs',
+    connect: 'full',
+    connectNote: 'protocol hello',
+    browse: 'full',
+    browseNote: 'table list',
+    importNote: 'Per table',
+    federatedNote: 'Yes',
+  },
+  {
+    type: 'Singer taps',
+    href: '/docs/repositories/singer-taps',
+    connect: 'full',
+    connectNote: 'tap run',
+    browse: 'full',
+    browseNote: 'stream list',
+    importNote: 'Per stream',
   },
   {
     type: 'Object storage',
@@ -215,9 +259,9 @@ const SOURCE_NODES: Array<{label: string; top: number; icon: ReactNode}> = [
 ];
 
 const CONSUMER_NODES = [
-  {label: 'Query', sub: 'OQL, SQL, or your BI tool', top: 54},
-  {label: 'Applications', sub: 'build directly on the graph', top: 164},
-  {label: 'Agents', sub: 'grounded context, not a prompt', top: 274},
+  {label: 'Query', sub: 'OQL and SQL', top: 54},
+  {label: 'Tools', sub: 'JDBC, REST, Iceberg, Python', top: 164},
+  {label: 'AI agents', sub: 'MCP, read-only', top: 274},
 ];
 
 const OQL_SAMPLE = `SELECT IPaper.title, IResearcher.name
@@ -226,7 +270,7 @@ WHERE IResearcher.affiliation = 'UPC'`;
 
 const QUICKSTART = `git clone https://github.com/dtak-upc/aran
 cd aran
-make all`;
+docker compose -f compose.standalone.yml up --build`;
 
 function IntegrationDiagram(): ReactNode {
   return (
@@ -265,7 +309,7 @@ function IntegrationDiagram(): ReactNode {
         ))}
       </div>
       <p className={styles.diagramCaption}>
-        Four different formats, one automatic pass. No transformation code written by hand.
+        Four kinds of source in, one queryable vocabulary out.
       </p>
     </>
   );
@@ -278,15 +322,14 @@ function Hero(): ReactNode {
         <div className={styles.heroText}>
           <span className={styles.eyebrow}>Universitat Politècnica de Catalunya · DTAK</span>
           <h1 className={styles.title}>
-            Sources that were never meant to meet,
+            Query data sources
             <br />
-            integrated into <span className={styles.titleAccent}>one graph</span>.
+            that were never designed to <span className={styles.titleAccent}>fit together</span>.
           </h1>
           <p className={styles.subtitle}>
-            Aran derives a schema from every source it registers (a database, a bucket, a
-            file, an endpoint) and aligns those schemas into one graph, at a scale no team
-            could map by hand. You can then query the graph, build an application on it, or
-            hand it to an agent.
+            Aran reads your files, databases, object storage, Iceberg catalogs and Singer taps.
+            It derives a schema for each, proposes how they join, and gives you one versioned
+            vocabulary to query. Self-hosted, with one Docker Compose file.
           </p>
           <div className={styles.actions}>
             <Link className="button button--primary button--lg" to="/docs/getting-started/quickstart">
@@ -314,18 +357,22 @@ function Capabilities(): ReactNode {
   return (
     <section className={styles.section}>
       <div className={styles.sectionInner}>
-        <h2 className={styles.sectionTitle}>What it does</h2>
+        <h2 className={styles.sectionTitle}>Five capabilities, one pipeline</h2>
         <p className={styles.sectionLead}>
-          Two organisations describing the same thing rarely describe it the same way, and
-          neither will change for you. The usual answer is a pipeline of transformation code.
-          Aran takes the other route.
+          Each stage feeds the next. The integration is stored as a graph you can query and
+          version, so it lives in one place instead of in transformation code.{' '}
+          <Link to="/docs/getting-started/walkthrough">The walkthrough</Link> runs all five on
+          three real datasets.
         </p>
         <div className={styles.grid}>
-          {CAPABILITIES.map((c) => (
+          {CAPABILITIES.map((c, i) => (
             <div key={c.title} className={styles.card}>
               <span className={styles.cardIcon}>{c.icon}</span>
-              <h3 className={styles.cardTitle}>{c.title}</h3>
+              <h3 className={styles.cardTitle}>
+                {i + 1}. {c.title}
+              </h3>
               <p className={styles.cardBody}>{c.body}</p>
+              <Link to={c.to}>Learn more →</Link>
             </div>
           ))}
         </div>
@@ -341,67 +388,21 @@ function QueryLanguage(): ReactNode {
         <div>
           <h2 className={styles.sectionTitle}>OQL</h2>
           <p className={styles.sectionLead}>
-            A join is a traversal of a named relationship, not a condition on columns you had to
-            look up. The planner takes the join keys from the model, compiles the query with
-            Apache Calcite and executes it on DuckDB.
+            A join names a relationship instead of matching columns. The planner reads the join
+            keys from the integrated schema, compiles the query with Apache Calcite and runs it
+            on DuckDB.
           </p>
           <Link to="/docs/oql/tutorial">Write your first query →</Link>
         </div>
         <div>
-          <CodeBlock language="sql" title="Papers by UPC researchers, from two databases at once">
+          <CodeBlock language="sql" title="Papers by UPC researchers, from two sources at once">
             {OQL_SAMPLE}
           </CodeBlock>
           <p className={styles.codeCaption}>
-            <code>IPaper</code> is one class over two unrelated paper databases; the rows come
-            back from both. Nothing in the query names a table, a file or a source.
+            <code>IPaper</code> is one class over two unrelated paper databases, and the rows come
+            back from both. The query names no table, file or source.
           </p>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function Pipeline(): ReactNode {
-  return (
-    <section className={styles.section}>
-      <div className={styles.sectionInner}>
-        <h2 className={styles.sectionTitle}>How it works</h2>
-        <p className={styles.sectionLead}>
-          Five steps from a file nobody has looked at to a query that spans it.{' '}
-          <Link to="/docs/getting-started/walkthrough">The walkthrough does all five</Link> with
-          three real datasets.
-        </p>
-        <ol className={styles.pipelineRow}>
-          {PIPELINE.map((s, i) => (
-            <li
-              key={s.title}
-              className={clsx(styles.pipelineNode, i === PIPELINE.length - 1 && styles.pipelineNodeActive)}>
-              <span className={styles.pipelineNum}>{i + 1}</span>
-              <span className={styles.pipelineTitle}>{s.title}</span>
-              <span className={styles.pipelineBody}>{s.body}</span>
-            </li>
-          )).reduce((acc: ReactNode[], node, i) => {
-            if (i > 0) {
-              acc.push(
-                <li key={`arrow-${i}`} className={styles.pipelineArrow} aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 3 L11 8 L5 13" />
-                  </svg>
-                </li>,
-              );
-            }
-            acc.push(node);
-            return acc;
-          }, [])}
-        </ol>
-        <ol className={styles.steps}>
-          {PIPELINE.map((s) => (
-            <li key={s.title} className={styles.step}>
-              <span className={styles.stepTitle}>{s.title}</span>
-              <span className={styles.stepBody}>{s.body}</span>
-            </li>
-          ))}
-        </ol>
       </div>
     </section>
   );
@@ -412,19 +413,19 @@ function GetStarted(): ReactNode {
     <section className={styles.section}>
       <div className={clsx(styles.sectionInner, styles.split)}>
         <div>
-          <h2 className={styles.sectionTitle}>Run it locally</h2>
+          <h2 className={styles.sectionTitle}>Run it</h2>
           <p className={styles.sectionLead}>
-            One command brings up the whole stack: the lake and its object store, the profiling
-            sidecar, PostgreSQL, Keycloak, Fuseki, the backend and the web client. The first run
-            builds a Python environment and takes a few minutes.
+            One Compose file starts the whole stack, and the first start prints a one-time
+            administrator password. To develop Aran, <code>make all</code> starts everything
+            from source.
           </p>
           <Link to="/docs/getting-started/quickstart">Quickstart →</Link>
         </div>
         <div>
           <CodeBlock language="bash">{QUICKSTART}</CodeBlock>
           <p className={styles.codeCaption}>
-            Needs JDK 25, Node 20+, Docker and Python 3.12. Sign in as <code>alice</code> /{' '}
-            <code>aran</code>.
+            Needs Docker 24 or later with Compose v2. Then open <code>localhost:8080</code> and
+            sign in as <code>alice</code>.
           </p>
         </div>
       </div>
@@ -436,11 +437,12 @@ function DataRepositories(): ReactNode {
   return (
     <section className={styles.section}>
       <div className={styles.sectionInner}>
-        <h2 className={styles.sectionTitle}>Data repositories</h2>
+        <h2 className={styles.sectionTitle}>Sources</h2>
         <p className={styles.sectionLead}>
-          A data repository is a registered connection to a place where data lives. Aran
-          recognises five types, and they do not all support the same things. The table shows
-          what each one does.
+          A data repository is a registered connection to a place where data lives. The five
+          types differ in what they can do, and{' '}
+          <Link to="/docs/overview/status">the status page</Link> says how far each has been
+          tested.
         </p>
         <div className={styles.matrixScroll}>
           <div className={styles.matrixWrap}>
@@ -503,8 +505,7 @@ function Closing(): ReactNode {
     <section className={styles.closing}>
       <h2 className={styles.sectionTitle}>Read the documentation</h2>
       <p className={styles.sectionLead} style={{margin: '0 auto 2rem'}}>
-        Tutorials, how-to guides, reference and the architecture deep dives, organised by what
-        you are trying to do.
+        Start with the quickstart, or read what Aran is and is not for.
       </p>
       <div className={styles.actions} style={{justifyContent: 'center'}}>
         <Link className="button button--primary button--lg" to="/docs/">
@@ -515,9 +516,9 @@ function Closing(): ReactNode {
         </Link>
       </div>
       <p className={styles.footnote}>
-        Aran is built at the Universitat Politècnica de Catalunya. Its schema-integration
-        metamodel follows Flores et al. (2024), whose running example is reproduced end to end
-        in the test suite.
+        Aran is pre-1.0 research software from the DTAK group at the Universitat Politècnica de
+        Catalunya. Its schema-integration metamodel follows Flores et al. (2024), whose running
+        example the test suite reproduces end to end.
       </p>
     </section>
   );
@@ -528,12 +529,11 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title={siteConfig.title}
-      description="Aran automatically integrates heterogeneous data sources into one graph, at a scale no team could map by hand. Query it, build on it, or hand it to an agent.">
+      description="Aran derives a schema for each of your data sources, proposes how they join, and gives you one versioned vocabulary to query over JDBC, MCP or the web workbench.">
       <Hero />
       <main>
         <Capabilities />
         <QueryLanguage />
-        <Pipeline />
         <GetStarted />
         <DataRepositories />
         <Closing />

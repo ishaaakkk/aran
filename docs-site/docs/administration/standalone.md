@@ -7,15 +7,17 @@ description: 'The supported single-node topology: one compose file, one command,
 ---
 
 The standalone topology runs the whole platform from one compose file. It is
-the supported way to deploy Aran on a single node.
+the supported way to deploy Aran on a single node, and the quickest way to
+evaluate it. This page covers starting it, the first sign-in, verifying the
+install, and the defaults to override before other people use it.
 
 ```bash
 docker compose -f compose.standalone.yml up --build
 ```
 
 Then open http://localhost:8080 and sign in. In v0.1.0 that address is the
-only one sign-in works from — see
-[Reaching it from another machine](#reaching-it-from-another-machine).
+only one sign-in works from (see
+[Reaching it from another machine](#reaching-it-from-another-machine)).
 
 `--build` builds the three Aran images from your checkout. Without it,
 Compose pulls them from `ghcr.io/dtak-upc` at the version your checkout
@@ -28,28 +30,28 @@ Seven services and one one-shot job, on one Compose network:
 
 | Service | Image | Role |
 | --- | --- | --- |
-| `postgres` | `postgres:17-alpine` | Both databases — `aran` and `aran_lake`, created by `deploy/standalone/init-db.sh` |
-| `keycloak` | `quay.io/keycloak/keycloak:26.2` | Authentication. You should never see it — see [the `/auth` proxy](#the-auth-same-origin-proxy) |
+| `postgres` | `postgres:17-alpine` | Both databases, `aran` and `aran_lake`, created by `deploy/standalone/init-db.sh` |
+| `keycloak` | `quay.io/keycloak/keycloak:26.2` | Authentication. Users should never see it, see [the `/auth` proxy](#the-auth-same-origin-proxy) |
 | `fuseki` | `stain/jena-fuseki:5.1.0` | The schema graph, one dataset per tenant |
 | `garage` | `dxflrs/garage:v1.0.1` | S3-compatible object storage for snapshots |
 | `aran-lake` | `ghcr.io/dtak-upc/aran-lake`, or built from `./aran-lake` | Snapshot service. Publishes no host port |
-| `freyja` | `ghcr.io/dtak-upc/aran-freyja`, or built from `./freyja` | Profiling, join discovery and constraint discovery — the evidence behind integration suggestions and the query planner's costs. Publishes no host port |
-| `aran-app` | `ghcr.io/dtak-upc/aran`, or built from `./Dockerfile` | The API **and** the UI, one origin |
+| `freyja` | `ghcr.io/dtak-upc/aran-freyja`, or built from `./freyja` | Profiling, join discovery and constraint discovery, which supply the evidence behind integration suggestions and the query planner's costs. Publishes no host port |
+| `aran-app` | `ghcr.io/dtak-upc/aran`, or built from `./Dockerfile` | The API and the UI, one origin |
 | `garage-init` | one-shot job | Creates the bucket and access key on first start, then exits |
 
 Only `aran-app` publishes a port, and only on loopback by default:
 `"${ARAN_BIND:-127.0.0.1}:8080:8081"`. Nothing else needs to be reachable
-from the host — Aran is the only thing that talks to the lake, and here that
-is a topology rule, not a convention.
+from the host. Aran is the only thing that talks to the lake, and in this
+topology the network enforces that.
 
 Data lives in four named volumes: `standalone-pg`, `standalone-fuseki`,
 `standalone-garage-meta`, `standalone-garage-data`.
 
 The app runs with `SPRING_PROFILES_ACTIVE: standalone` and is built with the
-`WITH_UI: "true"` build arg, which bakes the SPA into the image — the
+`WITH_UI: "true"` build arg, which bakes the SPA into the image, and the
 `standalone` profile serves it from `/app/static/`. Without that build arg
-the image ships no UI at all; see
-[Production build](./production-build.md#build-the-image).
+the image ships no UI at all (see
+[Production build](./production-build.md#build-the-image)).
 
 Licensing runs in `unlimited` mode: no caps, no `license` row, nothing to
 expire. See [License configuration](./license-configuration.md#unlimited-mode).
@@ -65,8 +67,8 @@ can be rotated alone.
 The first boot creates one tenant and one owner, `alice`. The password
 depends on how you started the stack:
 
-- **`ARAN_ADMIN_PASSWORD` set** — that is the password.
-- **Not set** — a 20-character password is generated and printed **once**,
+- `ARAN_ADMIN_PASSWORD` set: that is the password.
+- Not set: Aran generates a 20-character password and prints it once,
   at WARN level, to `aran-app`'s log. Retrieve it with:
 
   ```bash
@@ -75,15 +77,15 @@ depends on how you started the stack:
 
 The password is temporary either way: Keycloak forces a change at first
 login. It is not stored anywhere. The generated alphabet contains no
-ambiguous characters (no `I`/`l`/`1`, no `O`/`0`) — it is meant to be read
+ambiguous characters (no `I`/`l`/`1`, no `O`/`0`), because it is meant to be read
 off a terminal and typed once.
 
-If a seeded `alice` already exists — the dev realm import ships one with a
-published password — her credential is **rotated** to the generated or
-configured one, not kept. A fresh install never carries a password anyone
+If a seeded `alice` already exists (the dev realm import ships one with a
+published password), Aran rotates her credential to the generated or
+configured one instead of keeping it. A fresh install never carries a password anyone
 can read out of the repository.
 
-## Locked out — reset a password
+## Locked out: reset a password
 
 Recovery does not go through Aran's API: the person locked out is the
 administrator, and an unauthenticated admin endpoint would be a backdoor.
@@ -95,10 +97,21 @@ bootstrap admin credential:
 ```
 
 It prints a new 20-character temporary password once; the user must change
-it at next login. It reads these variables:
+it at next login.
+
+The script runs plain `docker compose` commands, so from the repository root
+they address `docker-compose.yml` unless told otherwise. For the standalone
+stack, point Compose at its file:
+
+```bash
+COMPOSE_FILE=compose.standalone.yml ./aran admin reset-password alice
+```
+
+It reads these variables:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
+| `COMPOSE_FILE` | unset, so `docker-compose.yml` | Read by `docker compose` itself. Set `compose.standalone.yml` for this topology |
 | `KC_ADMIN_USER` | `admin` | Keycloak bootstrap admin |
 | `KC_ADMIN_PASSWORD` | `admin` | Its password |
 | `ARAN_KEYCLOAK_REALM` | `aran` | Realm name |
@@ -113,15 +126,15 @@ There is no self-service reset: the stack has no SMTP, and the realm sets
 
 ## The `/auth` same-origin proxy
 
-The browser only ever sees `http://localhost:8080/auth/…` — no Keycloak
-port, no hostname change. Two variables enable it:
+The browser only ever sees `http://localhost:8080/auth/…`, with no Keycloak
+port and no hostname change. Two variables enable it:
 
 ```yaml
 ARAN_AUTH_PROXY_ENABLED: "true"
 ARAN_AUTH_PROXY_TARGET: http://keycloak:8080
 ```
 
-`aran-app` then forwards every `/auth/**` request to the fixed upstream —
+`aran-app` then forwards every `/auth/**` request to the fixed upstream;
 the request contributes only path and query. Keycloak is served under
 `/auth` (`KC_HTTP_RELATIVE_PATH`) with its hostname pinned to
 `${ARAN_PUBLIC_URL}/auth`, so every issued token's `iss` claim carries the
@@ -129,9 +142,9 @@ proxied URL while the JWK set is fetched over the container network. The
 login page uses Aran's own theme; users are created from Aran's admin UI,
 so Keycloak stays invisible.
 
-The realm also ships a second, public client, **`aran-cli`**, for scripted
+The realm also ships a second, public client, `aran-cli`, for scripted
 password-grant logins. The SPA client (`aran-web`) has direct access grants
-off on purpose, so any script that needs a token — the smoke test included —
+off on purpose, so any script that needs a token, the smoke test included,
 authenticates as `aran-cli`:
 
 ```bash
@@ -139,6 +152,10 @@ curl -s -X POST http://localhost:8080/auth/realms/aran/protocol/openid-connect/t
   -d client_id=aran-cli -d grant_type=password \
   -d username=alice -d "password=$ARAN_ADMIN_PASSWORD"
 ```
+
+Until the first-run password has been changed, Keycloak answers this request
+with an error saying the account is not fully set up. Sign in once in the
+browser and change it, then use the new password here.
 
 ## Verify the install
 
@@ -148,8 +165,12 @@ Run the smoke test from the repository root:
 ARAN_ADMIN_PASSWORD=<the password> ./scripts/standalone-smoke.sh
 ```
 
-It signs in as the seeded owner, mints an API token, confirms the owner is a
-real member of a real tenant, creates a project and a repository, uploads
+It reads the deployment's auth policy and signs in as the seeded owner. If
+the password is still the temporary first-run one, it completes the forced
+change through Keycloak's Admin API with the `aran-backend` service account,
+which is why it reads `ARAN_KEYCLOAK_ADMIN_CLIENT_SECRET`, and keeps the same
+password as the permanent one. It then mints an API token, confirms the owner
+is a real member of a real tenant, creates a project and a repository, uploads
 the demo dataset, waits for bootstrap, waits for FREYJA to profile the
 upload, and runs a query that must fail with a 4xx saying no schema is
 active yet. The profiling check reads the `column_profile` table through
@@ -170,7 +191,7 @@ Its inputs, all overridable:
 | `ARAN_BASE_URL` | `http://localhost:8080` |
 | `ARAN_KEYCLOAK_BASE` | `http://localhost:8080/auth` |
 | `ARAN_ADMIN_USERNAME` | `alice` |
-| `ARAN_ADMIN_PASSWORD` | none — required |
+| `ARAN_ADMIN_PASSWORD` | none, required |
 | `ARAN_DEMO_CSV` | `demo/seminar/acm_papers.csv` |
 | `ARAN_KEYCLOAK_ADMIN_CLIENT_SECRET` | `dev-backend-secret-change-in-prod` |
 | `ARAN_COMPOSE_FILE` | `compose.standalone.yml` |
@@ -181,7 +202,7 @@ The topology ships development defaults so that one command boots on a
 laptop. The `standalone` profile sets
 `aran.security.allow-insecure-defaults: true`, so the
 [startup guard](./configuration-reference.md#guarded-settings--the-startup-refusal)
-warns instead of refusing — the log names every defaulted credential.
+warns instead of refusing, and the log names every defaulted credential.
 Override all of these on any host other people can log in to:
 
 | Variable | Shipped default |
@@ -196,13 +217,13 @@ Override all of these on any host other people can log in to:
 | `ARAN_FUSEKI_PASSWORD` | `admin` |
 
 The two lake secrets are spliced into a JSON map for the lake, so use hex
-or base64url values (`openssl rand -hex 32`) — no quotes or backslashes.
-Set `ARAN_ENCRYPTION_KEY` **before** registering any repository — rotating
+or base64url values (`openssl rand -hex 32`), with no quotes or backslashes.
+Set `ARAN_ENCRYPTION_KEY` before registering any repository, because rotating
 it later makes already-stored repository credentials undecryptable.
 
 ## Reaching it from another machine
 
-**v0.1.0 supports loopback only.** Sign-in works from `http://localhost:8080`
+v0.1.0 supports loopback only. Sign-in works from `http://localhost:8080`
 and from nowhere else, so to use a stack running on a server, tunnel to it
 and browse to localhost on your own machine:
 
@@ -211,7 +232,7 @@ ssh -L 8080:localhost:8080 <server>
 ```
 
 Publishing it beyond loopback (`ARAN_BIND=0.0.0.0`, a public
-`ARAN_PUBLIC_URL`) is **unsupported until the hardening phase**, and does
+`ARAN_PUBLIC_URL`) is unsupported until the hardening phase and does
 not work today: the login library needs a browser secure context (HTTPS, or
 `localhost`) for its Web Crypto calls, and the realm accepts only
 `localhost` redirect URIs. TLS termination, `ARAN_AUTH_REQUIRE_TLS`, the
@@ -219,14 +240,14 @@ public hostname and the realm's redirect URIs arrive together in that phase.
 
 ## Limits
 
-- **One tenant, one user to start.** Add colleagues from **Administration →
-  Users** — *Administration* is in the user menu (your avatar, bottom of the
+- One tenant and one user to start. Add colleagues from **Administration →
+  Users**. *Administration* is in the user menu (your avatar, bottom of the
   left rail) and only an owner sees it. A user belongs to exactly one tenant.
-- **Not multi-node.** Single instance; the JDBC endpoint keeps per-statement
-  cursors in memory.
-- **No email**, so no self-service password reset — use
+- Single instance only: the JDBC endpoint keeps per-statement cursors in
+  memory.
+- No email, so no self-service password reset. Use
   `./aran admin reset-password`.
-- **Loopback only** in v0.1.0 — see
+- Loopback only in v0.1.0. See
   [Reaching it from another machine](#reaching-it-from-another-machine).
 
 ## Related

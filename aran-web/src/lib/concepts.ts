@@ -81,7 +81,7 @@ export const CONCEPTS = {
     'the active schema and recomputes it from the sources that schema points at (a live source ' +
     'as it is now, an uploaded file as of its last upload or refresh), so enforced constraints ' +
     'apply immediately. The price: the query runs on every read, it is not served over Iceberg, ' +
-    'an agent read returns up to 1,000 rows, and a read fails if a schema change breaks the query.',
+    'and a read fails if a schema change breaks the query.',
 
   oql:
     "Aran's query language over the integrated schema: SELECT properties FROM one class, " +

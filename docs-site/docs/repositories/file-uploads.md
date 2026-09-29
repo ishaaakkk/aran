@@ -18,19 +18,19 @@ data gets in is an upload through the dataset wizard or the API.
    - **Type:** `FILE_SYSTEM`
 3. Submit. There is nothing else to configure.
 
-Then register datasets under it by uploading files — see
+Then register datasets under it by uploading files, as described in
 [Register a data repository](../how-to/register-a-data-repository.md#upload-a-file).
 
 ## Supported capabilities
 
 | Capability | Status |
 | --- | --- |
-| Connection test | **Nothing to test.** It passes and says the type holds uploads. |
-| Browse contents | **No.** A scan returns an empty list. |
-| Preview by name | **No.** Refused as unavailable for this type. |
-| Import contents | **No.** There is no upstream to import from. |
-| Live federated query | **No.** |
-| File upload into this repository | **Yes** — CSV, JSON, and Parquet. |
+| Connection test | Nothing to test. It passes and says the type holds uploads. |
+| Browse contents | No. A scan returns an empty list. |
+| Preview by name | No. Refused as unavailable for this type. |
+| Import contents | No. There is no upstream to import from. |
+| Live federated query | No. |
+| File upload into this repository | Yes (CSV, JSON and Parquet). |
 
 An uploaded file has no upstream, so a dataset under this type cannot be
 refreshed. To replace its data, upload the new file as a new dataset.
@@ -49,10 +49,10 @@ is ignored.
 ## Why there is no directory
 
 Earlier versions bound this type to a directory on the backend host: Aran
-listed the files in it, previewed them, and probed the path from the
-connection test. Nothing could be imported from a listed file, so all that
-surface did was read the server's own filesystem on behalf of any project
-member. It was fenced by an operator allowlist, `aran.fs.allowed-roots`, and
-then removed before the first release. That setting and its environment
-variable, `ARAN_FS_ALLOWED_ROOTS`, no longer exist and are ignored if set.
-To bring in files that live on a server, upload them.
+listed the files in it, previewed them and probed the path from the
+connection test. Nothing could be imported from a listed file, so that
+surface only read the server's own filesystem on behalf of any project
+member. An operator allowlist, `aran.fs.allowed-roots`, fenced it, and the
+whole surface was then removed before the first release. That setting and its
+environment variable, `ARAN_FS_ALLOWED_ROOTS`, no longer exist and are ignored
+if set. To bring in files that live on a server, upload them.

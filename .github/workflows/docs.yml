@@ -68,6 +68,9 @@ jobs:
       - name: Check diagrams render
         run: npm run check-diagrams
 
+      - name: Check prose patterns
+        run: npm run check-prose
+
   # The checks above run against a root-served build; Pages serves the site under
   # /aran/, so the published build is a second one with that base.
   deploy:

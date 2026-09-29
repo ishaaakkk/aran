@@ -3,44 +3,64 @@ title: 'Aran documentation'
 sidebar_label: 'Home'
 sidebar_position: 0
 slug: /
-description: 'Documentation for Aran, a platform for registering heterogeneous data sources, integrating their schemas, and querying across them.'
+description: 'Documentation for Aran, a platform that derives a schema for each of your data sources, proposes how they join, and lets you query them together.'
 # Diátaxis mode: explanation (orientation only: this page routes, it does not teach)
 ---
 
 # Aran documentation
 
-Aran registers different data sources. It derives a schema for each
-source. You align these schemas into one shared vocabulary. You then query
-across every source through that vocabulary.
+Aran connects to files, databases, object storage, Iceberg catalogs and Singer
+taps. It derives a schema for each source, proposes how they join, and gives you
+one versioned vocabulary to query. You can read the result over JDBC, REST,
+Iceberg REST and MCP.
 
-This documentation is organised by task.
+## Try it
 
-## Start here
+```bash
+git clone https://github.com/dtak-upc/aran
+cd aran
+docker compose -f compose.standalone.yml up --build
+```
 
-| If you want to… | Read |
+Open `http://localhost:8080` and sign in as `alice`. The
+[quickstart](./getting-started/quickstart.md) has the details, and the
+[walkthrough](./getting-started/walkthrough.md) integrates three datasets in
+about 45 minutes.
+
+## The five capabilities
+
+| | Capability | Read |
+| --- | --- | --- |
+| 1 | **Connect** sources, as snapshots or live | [Connect](./capabilities/connect.md) |
+| 2 | **Derive and profile** a schema, wrapper and statistics for each | [Derive and profile](./capabilities/derive-and-profile.md) |
+| 3 | **Align and version** the schemas into one vocabulary | [Align and version](./capabilities/align-and-version.md) |
+| 4 | **Query** the vocabulary in OQL | [Query](./capabilities/query.md) |
+| 5 | **Serve** saved queries as data products over JDBC, Iceberg REST and MCP, and run OQL from scripts and notebooks | [Serve](./capabilities/serve.md) |
+
+## Find what you need
+
+| If you want to | Read |
 | --- | --- |
 | Understand what the platform is for | [What is Aran](./overview/what-is-aran.md) |
-| Learn the vocabulary the rest of the docs assume | [Core concepts](./overview/core-concepts.md) |
-| Get a local instance running | [Quickstart](./getting-started/quickstart.md) |
-| Follow a complete integration end to end | [Full walkthrough](./getting-started/walkthrough.md) |
-| Query an integrated schema | [OQL](./oql/index.md) |
+| Understand the vocabulary the docs use | [Core concepts](./overview/core-concepts.md) |
+| Know what is tested and what is not | [Status and limitations](./overview/status.md) |
+| Decide whether Aran fits | [Why Aran](./overview/why-aran.md) |
+| Write a query | [OQL tutorial](./oql/tutorial.md) |
 | Understand how a query is planned and priced | [Typed columns and costing](./query-engine/typed-columns-and-costing.md) |
-| Deploy or operate an instance | [Administration & Deployment](./administration/production-build.md) |
+| Connect a SQL client, notebook or agent | [Connect your tools](./programmatic-access/index.md) |
+| Deploy an instance | [Run Aran standalone](./administration/standalone.md) |
+| Assemble a deployment yourself | [Production build and packaging](./administration/production-build.md) |
+| Look up a setting | [Configuration reference](./administration/configuration-reference.md) |
 | Change the code | [Contributor guide](./contributing/index.md) |
 
-## How these pages are organised
+## How the pages are organised
 
-Each page uses exactly one of four modes. The front matter states the mode.
+The site follows [Diátaxis](https://diataxis.fr). Each page has one mode, given
+in its front matter:
 
-- **Tutorials** teach through a working example. They assume no prior
-  knowledge. You can follow them line by line.
-- **How-to guides** solve one problem. They assume you already know the
-  system and know what you want.
-- **Reference** describes the interfaces: syntax, endpoints, configuration
-  keys, connector capabilities. Use it to look things up, not to read start
-  to finish.
-- **Explanation** covers why the system works this way. It contains no steps
-  to run.
+- **Tutorials** teach with a working example.
+- **How-to guides** solve one problem for a reader who knows the system.
+- **Reference** describes syntax, endpoints, settings and capabilities.
+- **Explanation** says why the system works as it does.
 
-Pages never mix modes. When a how-to guide needs background, it links to the
-explanation page instead of repeating it.
+A how-to guide links to an explanation page for background instead of repeating it.

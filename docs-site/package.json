@@ -15,7 +15,8 @@
     "typecheck": "tsc",
     "check-links": "node scripts/check-links.mjs",
     "check-diagrams": "node scripts/check-diagrams.mjs",
-    "validate": "npm run build && npm run check-links && npm run check-diagrams"
+    "validate": "npm run build && npm run check-links && npm run check-diagrams && npm run check-prose",
+    "check-prose": "node scripts/check-prose.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",

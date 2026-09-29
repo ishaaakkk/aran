@@ -13,7 +13,7 @@ did not, or when you need to redo one.
 Every API call on this page needs a **`FULL`** token: `bootstrapping` and
 `profiling` are not the query engine, so a READ token is refused with
 *a READ-scope API token cannot invoke '…' on \<operator\>*. See
-[Programmatic access](../programmatic-access/index.md#token-scopes-the-split-is-by-route-not-by-meaning).
+[Connect your tools](../programmatic-access/index.md#token-scopes-the-split-is-by-route-not-by-meaning).
 
 ## What happens automatically
 
@@ -22,15 +22,19 @@ profile. The status badge goes from **Bootstrapping…** to **Ready**. (The
 API-level enum behind the badge is `PENDING`, `RUNNING`, `READY`, `FAILED`,
 `CANCELLED`, `DRIFTED`.)
 
-"Best-effort" is the key word for profiling. If FREYJA is unreachable, the
+Profiling is best-effort. If FREYJA is unreachable, the
 profile step fails quietly. The job still succeeds, because the bootstrap
-genuinely did succeed — failing the job would be a lie. So a dataset can be
-**Ready** with no profiles at all.
+did succeed. A dataset can therefore be **Ready** with no profiles at all.
 
 ## Re-bootstrap a dataset
 
-From the UI, re-run bootstrapping from the dataset's detail panel. Over the
-API:
+From the UI, open the dataset's schema graph and click **Re-read source
+schema**. The UI runs a drift check first: additions and warnings apply
+straight away, and a breaking change opens a review instead of applying. To
+see the difference without applying anything, click **Check for schema
+changes** in the dataset's detail panel.
+
+Over the API:
 
 ```http
 POST /api/operators/bootstrapping/submit
@@ -43,7 +47,7 @@ POST /api/operators/bootstrapping/submit
 | Parameter | Required | Notes |
 | --- | --- | --- |
 | `datasetId` | Yes | |
-| `format` | No | Force `JSON`, `CSV`, or `PARQUET`. Otherwise Aran resolves it from the snapshot's MIME type, falling back to the dataset name's extension. Ignored for a snapshot-less federated source — no bytes to detect. |
+| `format` | No | Force `JSON`, `CSV`, or `PARQUET`. Otherwise Aran resolves it from the snapshot's MIME type, falling back to the dataset name's extension. Ignored for a snapshot-less federated source, which has no bytes to detect. |
 | `filenameHint` | No | Helps format detection when the name is unhelpful. |
 | `force` | No | Apply the new schema even when it breaks mappings already compiled into the active schema. Defaults to false. |
 
@@ -52,7 +56,7 @@ Re-bootstrapping is idempotent. Aran clears existing wrapper triples first.
 :::warning Re-bootstrapping can refuse to apply
 If the new schema would break something compiled into the active schema,
 Aran writes nothing. The dataset's badge becomes **SCHEMA DRIFT**. Nothing
-failed, and nothing is retryable. See [Handle drift](#handle-drift).
+failed, and there is nothing to retry. See [Handle drift](#handle-drift).
 :::
 
 ## Check what re-bootstrapping would change
@@ -98,9 +102,10 @@ From the UI:
 
 1. Open the dataset.
 2. Go to the **Profile** tab.
-3. Click **Run Profiling Operator**.
+3. Click **Run profiling** when the tab has no stored profile, or
+   **Refresh profile** to replace the stored snapshot profile.
 
-The button needs a bound snapshot. Without one — the federated case — the
+The button needs a bound snapshot. Without one (the federated case) the
 tab says *Cannot profile: this dataset metadata has no bound snapshot ID.*
 When profiling finishes, per-column metrics appear, including *Cardinality
 count*.
@@ -120,27 +125,28 @@ POST /api/operators/profiling/submit
 
 | Parameter | Required | Default | Notes |
 | --- | --- | --- | --- |
-| `snapshotId` | Yes | | The **snapshot**, not the dataset |
-| `datasetId` | No | none | **Pass this.** Without it the profiles are computed and not persisted |
-| `varcharOnly` | No | `true` | Profile only varchar columns. Any value other than the literal `false` counts as true, garbage included |
+| `snapshotId` | Yes, unless `federated=true` | | The **snapshot**, not the dataset |
+| `datasetId` | No | none | **Pass this.** Without it the profiles are computed and not persisted. Required when `federated=true` |
+| `varcharOnly` | No | `true` | Profile only varchar columns. Any value other than `false` (in any case) counts as true, garbage included |
 | `maxConcurrentColumnQueries` | No | `4` | Parallelism against the lake |
 | `wrapperSql` | No | none | Profile the output of this wrapper SQL instead of the raw snapshot |
-| `classIri` | No | none | The source class the wrapper-output profile belongs to |
+| `classIri` | With `wrapperSql` | none | The source class the wrapper-output profile belongs to |
+| `federated` | No | `false` | `true` profiles the dataset's live federated read in place; `snapshotId` is then ignored |
 
-Note three things. First, the required parameter is `snapshotId`, but the
-persistence parameter is `datasetId` — omit `datasetId` and you get a
-result in the response and nothing stored. Second, `varcharOnly` defaults
-to **true**, so by default Aran does not profile numeric columns. Third,
-Aran records what a run measured — the snapshot itself (`SNAPSHOT`), a
+Three things to know. The required parameter is `snapshotId`, but the
+persistence parameter is `datasetId`: omit `datasetId` and you get a
+result in the response and nothing stored. `varcharOnly` defaults
+to **true**, so by default Aran does not profile numeric columns. And Aran
+records what a run measured: the snapshot itself (`SNAPSHOT`), a
 wrapper's output when `wrapperSql` is given (`WRAPPER_OUTPUT`), or a live read
-(`FEDERATED_LIVE`) — and that subject is derived, never a parameter. It
+(`FEDERATED_LIVE`, when `federated=true`). That subject is derived, never a parameter, and it
 decides who can use the result: **join discovery reads only
 `SNAPSHOT`-subject profiles.** A `WRAPPER_OUTPUT` profile feeds the query
 planner's costing and contributes nothing to discovery.
 
 ## Why profiles matter
 
-Profiles are not decoration. Two things read them:
+Two things read profiles:
 
 - **Join discovery** compares value domains across datasets to propose
   joins. With no `SNAPSHOT` profiles, there are no candidates.
@@ -157,12 +163,12 @@ whether the datasets are profiled first.
 | Symptom | Cause |
 | --- | --- |
 | **Ready** but the Profile tab is empty | FREYJA was unreachable during the automatic run. Run it manually. |
-| Profiling never finishes | FREYJA down. The `profiling` operator has **no `ping`** — it answers `UNSUPPORTED_OPERATION`. Check `GET /actuator/health` (its `freyja` indicator probes the sidecar) or, as an owner, `GET /api/tenant/admin/system`. |
+| Profiling never finishes | FREYJA down. The `profiling` operator has **no `ping`** and answers `UNSUPPORTED_OPERATION`. Check `GET /actuator/health` on the management port, `8082` by default (its `freyja` indicator probes the sidecar), or, as an owner, `GET /api/tenant/admin/system`. |
 | Badge stuck on **Bootstrapping…** | The job event stream, not the job. Reload; the work is usually done in seconds. |
 | **Failed** | The file did not parse. JSON whose root is neither object nor array is the usual cause. |
 | Profiles ran but numeric columns have none | `varcharOnly` defaults to true. |
 
 ## Related
 
-- [Bootstrapping and the schema graph](../deep-dives/bootstrapping-and-the-schema-graph.mdx) — what gets written.
-- [Run join discovery](./run-join-discovery.md) — the main consumer of profiles.
+- [Bootstrapping and the schema graph](../deep-dives/bootstrapping-and-the-schema-graph.mdx): what gets written.
+- [Run join discovery](./run-join-discovery.md): the main consumer of profiles.

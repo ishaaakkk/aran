@@ -69,9 +69,8 @@ reporter of any incident.
 
 Aran is maintained by a research group at Universitat Politècnica de Catalunya.
 If a report concerns the project's maintainers, or you would rather it not be
-handled inside the project at all, UPC's own institutional channels for
-harassment and misconduct remain available to you and are not displaced by this
-document.
+handled inside the project, you can still use UPC's own institutional channels
+for harassment and misconduct. This document does not replace them.
 
 ## Enforcement Guidelines
 

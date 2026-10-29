@@ -1,0 +1,4 @@
+.env
+.venv/
+i1_responses/
+__pycache__/

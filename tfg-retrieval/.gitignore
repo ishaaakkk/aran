@@ -2,3 +2,4 @@
 .venv/
 i1_responses/
 __pycache__/
+data/
